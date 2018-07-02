@@ -3,7 +3,7 @@ import os.path
 import pandas as pd
 
 
-def apply_blacklist(input_file, blacklist_file, output_file, blacklist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def apply_blacklist_text(input_file, blacklist_file, output_file, blacklist_column='text', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(input_file):
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
@@ -16,7 +16,7 @@ def apply_blacklist(input_file, blacklist_file, output_file, blacklist_column='c
 
     blacklist = pd.read_csv(filepath_or_buffer=blacklist_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 
-    data = data[~data[blacklist_column].isin(blacklist[blacklist_column])]
+    data = data[~data[blacklist_column].str.contains('|'.join(blacklist[blacklist_column]))]
 
     data.to_csv(path_or_buf=output_file, index=False,
                 sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
@@ -30,7 +30,7 @@ def main():
     parser.add_argument('output_file')
     #parser.add_argument('--blacklist_column')
     args = parser.parse_args()
-    apply_blacklist(args.input_file, args.blacklist_file, args.output_file)
+    apply_blacklist_text(args.input_file, args.blacklist_file, args.output_file)
 
 
 if __name__ == '__main__':

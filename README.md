@@ -7,4 +7,6 @@ recommended order of running scripts:
 - extract and sort
 - contra_histogram
 - apply_blacklist
+- text_histogram
+- apply_blacklist_text
 - split
