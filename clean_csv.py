@@ -13,7 +13,7 @@ def clean_csv(input_file, output_file, csv_date_format='%d.%m.%Y', csv_delimiter
                        names=['iban', 'text', 'value_date', 'posting_date', 'amount', 'currency'],
                        parse_dates=['value_date', 'posting_date'], date_parser=date_parser,
                        converters={'amount': amount_parser})
-    data.to_csv(path_or_buf=output_file, index=False, date_format=csv_date_format)
+    data.to_csv(path_or_buf=output_file, index=False, date_format=csv_date_format, encoding='utf-8')
 
 
 def main():
