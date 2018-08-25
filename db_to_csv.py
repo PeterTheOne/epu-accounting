@@ -29,6 +29,7 @@ def export_records(db_file, output_file, csv_date_format='%d.%m.%Y', csv_delimit
         data.to_csv(path_or_buf=output_file, index=False,
                 sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
                 date_format=csv_date_format)
+    conn.close()
 
 
 def main():

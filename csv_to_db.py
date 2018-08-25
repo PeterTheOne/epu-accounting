@@ -33,6 +33,7 @@ def import_records(input_file, db_file, csv_date_format='%d.%m.%Y', csv_delimite
     conn = create_connection(db_file)
     with conn:
         data.to_sql('records', conn, if_exists='replace')
+    conn.close()
 
 
 def main():
