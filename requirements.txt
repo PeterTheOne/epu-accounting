@@ -1,1 +1,5 @@
 pandas==0.23.4
+#pypdf2==1.26.0
+git+https://github.com/mstamy2/PyPDF2@master#egg=pypdf2
+#git+https://github.com/deanmalmgren/textract@master#egg=textract
+#nltk==3.3
