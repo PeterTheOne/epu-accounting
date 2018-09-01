@@ -1,5 +1,6 @@
 import argparse
 import os.path
+from pathlib import Path
 import pandas as pd
 
 import PyPDF2 
@@ -14,19 +15,18 @@ import locale
 #from nltk.tokenize import word_tokenize
 #from nltk.corpus import stopwords
 
-def read_pdf(invoice_file, csv_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def convert_strings_to_dates(value, format):
+    locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
+    try:
+        return pd.datetime.strptime(value, format)
+    except ValueError:
+        return False
+
+
+def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(invoice_file):
         print('Error: File "{0}" doesn\'t exist.'.format(invoice_file))
         return
-
-    if not os.path.isfile(csv_file):
-        print('Error: File "{0}" doesn\'t exist.'.format(csv_file))
-        return
-
-    # read csv
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=csv_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
 
     #open allows you to read the file
     pdfFileObj = open(invoice_file,'rb')
@@ -55,18 +55,27 @@ def read_pdf(invoice_file, csv_file, csv_date_format='%d.%m.%Y', csv_delimiter='
 
     # extract important info
     ibans = re.findall('([A-Z]{2}\d{2}(?:\s?\d{4}){4,8})', text, re.MULTILINE)
-    dates = re.findall('((?:\d{1,2}\.\d{1,2}\.\d{4})|(?:\d{1,2}\.\s+(?:Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|September|Oktober|November|Dezember)\s+\d{4}))', text, re.MULTILINE)
     amounts = re.findall('(\d{1,3},\d{2})', text, re.MULTILINE)
     emails = re.findall('\@(.+\..+)', text, re.MULTILINE)
     invoice_no = re.findall('(\d{5,20})', text, re.MULTILINE)
+
+    # extract dates
+    # TODO: support for other locales
+    date_regex_format = [
+        {'regex': '(\d{1,2}\.\d{1,2}\.\d{4})', 'format': '%d.%m.%Y'},
+        {'regex': '(\d{1,2}\.\s+(?:Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|September|Oktober|November|Dezember)\s+\d{4})', 'format': '%d. %B %Y'},
+    ]
+    dates = []
+    for regex_format in date_regex_format:
+        dates_set = re.findall(regex_format['regex'], text, re.MULTILINE)
+        dates_set = list(filter(lambda y: y != False, map(lambda x: convert_strings_to_dates(x, regex_format['format']), dates_set)))
+        dates.extend(dates_set)
 
     # format for csv matching
     ibans = list(map(lambda iban: ''.join(iban.split()), ibans))
     amounts = list(map(lambda amount: amount.replace(',', '.'), amounts))
 
     # find date by last
-    locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
-    dates = list(map(lambda x: pd.datetime.strptime(x, '%d. %B %Y'), dates))
     if len(dates) > 0:
         date = dates[len(dates) - 1]
     else:
@@ -110,12 +119,35 @@ def read_pdf(invoice_file, csv_file, csv_date_format='%d.%m.%Y', csv_delimiter='
     print(matches[['line_id', 'posting_date']])
 
 
+def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+    if not os.path.exists(input_path):
+        print('Error: No such directory "{0}".'.format(input_path))
+        return
+
+    if not os.path.isfile(csv_file):
+        print('Error: File "{0}" doesn\'t exist.'.format(csv_file))
+        return
+
+    # read csv
+    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
+    data = pd.read_csv(filepath_or_buffer=csv_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
+                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+
+    # batch process all PDFs recursively
+    pathlist = Path(input_path).glob('**/*.pdf')
+    for path in pathlist:
+        # because path is object not string
+        path_in_str = str(path)
+        print('Processing ' + path_in_str)
+        read_pdf(data, path_in_str)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('invoice_file')
     parser.add_argument('csv_file')
+    parser.add_argument('input_path')
     args = parser.parse_args()
-    read_pdf(args.invoice_file, args.csv_file)
+    batch_read_pdf(args.csv_file, args.input_path)
 
 
 if __name__ == '__main__':
