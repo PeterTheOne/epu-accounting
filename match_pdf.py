@@ -33,6 +33,7 @@ def clamp(num, min_value, max_value):
    return max(min(num, max_value), min_value)
 
 
+# TODO: min larger than max
 def linear_conversion(old_value, old_min, old_max, new_min, new_max):
     new_value = ( (old_value - old_min) / (old_max - old_min) ) * (new_max - new_min) + new_min
     return clamp(abs(new_value), 0, 1)
@@ -48,13 +49,45 @@ def match_date(csv_dates, date):
     return weights
 
 
-def match_filename(csv_comments, keywords):
+def match_exact(csv_column, values):
     weights = []
+    for csv_row in csv_column:
+        if len(values) > 0:
+            if csv_row in values:
+                weight = 1
+            else:
+                weight = 0
+        else:
+            weight = 0
+        weights.append( weight )
+    weights = pd.Series(weights, index=csv_column.index)
+    return weights
+
+
+def match_keywords(csv_comments, keywords):
+    weights = []
+    pattern = '|'.join(keywords)
     for csv_comment in csv_comments:
-        matches = re.findall(keywords, str(csv_comment), re.MULTILINE)
-        weight = linear_conversion(len(matches), 0, 3, 0, 1)
+        if len(keywords) > 0:
+            matches = re.findall(pattern, str(csv_comment), re.MULTILINE)
+            weight = linear_conversion(len(matches), 0, len(keywords), 0, 1)
+        else:
+            weight = 0
         weights.append( weight )
     weights = pd.Series(weights, index=csv_comments.index)
+    return weights
+
+
+def match_amount(csv_amounts, amount):
+    weights = []
+    for csv_amount in csv_amounts:
+        diff = abs(csv_amount) - abs(amount)
+        if amount != False:
+            weight = 1 - linear_conversion(diff, 0, 2, 0, 1)
+        else:
+            weight = 0
+        weights.append( weight )
+    weights = pd.Series(weights, index=csv_amounts.index)
     return weights
 
 
@@ -124,50 +157,38 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     if len(amounts) > 0:
         amount = float(amounts[0])
     else:
-        amount = 0.0
+        amount = False
 
-    # print('IBANs:')
-    # print(ibans)
-    # print('dates:')
-    # print(dates)
-    # print('date:')
-    # print(date)
-    # print('amounts:')
-    # print(amounts)
-    # print('amount:')
-    # print(amount)
     # print('emails:')
     # print(emails)
-    # print('invoice no:')
-    # print(invoice_no)
 
-    invoice_pattern = '|'.join(invoice_no)
     filename_keywords = list(filter(lambda keyword: len(keyword) > 4, filename_keywords)) # filter short
-    filename_pattern = '|'.join(filename_keywords)
 
-    # TODO: Create list of matches, weighted by conditions
-
-    condition_iban = (data['contra_iban'].isin(ibans))
-    condition_amount = (data['amount'].abs() == amount)
-    condition_invoice_no = (data['comment'].str.contains(invoice_pattern) == True)
-    condition_date = abs(data['posting_date'] - date) < datetime.timedelta(days=30)
-    #matches = data[condition_iban & condition_amount & condition_invoice_no]
-    #matches = data[condition_invoice_no & condition_date]
-
-    #print(matches[['line_id', 'posting_date']])
-
-    filename_weights = match_filename(data['comment'], filename_pattern)
+    filename_weights = match_keywords(data['comment'], filename_keywords)
+    iban_weights = match_exact(data['contra_iban'], ibans)
+    numbers_weights = match_keywords(data['comment'], invoice_no)
+    amount_weights = match_amount(data['amount'], amount)
     date_weights = match_date(data['posting_date'], date)
-    #print(date_weights)
 
-    weights = (filename_weights*0.7 + date_weights*0.3)
+    weights = (filename_weights*0.3 + iban_weights*0.2 + numbers_weights*0.25 + date_weights*0.1 + amount_weights*0.15)
 
     print('Date: ' + str(date))
-    print('Filename: ' + filename_pattern)
-    result = pd.concat([data, weights.rename('weight'), filename_weights.rename('filename_weight'), date_weights.rename('date_weight')], axis=1, sort=False)
-    result = result.sort_values(by=['weight'], ascending=False) # sort by closest
+    print('Filename: ' + str(filename_keywords))
+    print('IBAN: ' + str(ibans))
+    print('Numbers: ' + str(invoice_no))
+    print('Amount: ' + str(amount))
+    result = pd.concat([
+        data,
+        weights.rename('w'),
+        filename_weights.rename('filename_w'),
+        iban_weights.rename('iban_w'),
+        numbers_weights.rename('numbers_w'),
+        date_weights.rename('date_w'),
+        amount_weights.rename('amount_w')
+    ], axis=1, sort=False)
+    result = result.sort_values(by=['w'], ascending=False) # sort by closest
     result = result.iloc[:10] # keep only top 10
-    print(result[['line_id', 'comment', 'weight', 'filename_weight', 'date_weight']])
+    print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w']])
 
 
 def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
