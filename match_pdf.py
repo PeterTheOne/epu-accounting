@@ -23,6 +23,29 @@ def convert_strings_to_dates(value, format):
         return False
 
 
+def lerp(a, b, x):
+    return (x * a) + ((1-x) * b)
+
+
+def clamp(num, min_value, max_value):
+   return max(min(num, max_value), min_value)
+
+
+def linear_conversion(old_value, old_min, old_max, new_min, new_max):
+    new_value = ( (old_value - old_min) / (old_max - old_min) ) * (new_max - new_min) + new_min
+    return clamp(abs(new_value), 0, 1)
+
+
+def match_date(csv_dates, date):
+    weights = []
+    for csv_date in csv_dates:
+        weight = 1 - linear_conversion((csv_date - date).days, 0, datetime.timedelta(days=30).days, 0, 1)
+        weights.append( weight )
+        #print(str(csv_date - date) + ' to ' + str(weight))
+    weights = pd.Series(weights, index=csv_dates.index)
+    return weights
+
+
 def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(invoice_file):
         print('Error: File "{0}" doesn\'t exist.'.format(invoice_file))
@@ -89,34 +112,42 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     else:
         amount = 0.0
 
-    print('IBANs:')
-    print(ibans)
-    print('dates:')
-    print(dates)
-    print('date:')
-    print(date)
-    print('amounts:')
-    print(amounts)
-    print('amount:')
-    print(amount)
-    print('emails:')
-    print(emails)
-    print('invoice no:')
-    print(invoice_no)
+    # print('IBANs:')
+    # print(ibans)
+    # print('dates:')
+    # print(dates)
+    # print('date:')
+    # print(date)
+    # print('amounts:')
+    # print(amounts)
+    # print('amount:')
+    # print(amount)
+    # print('emails:')
+    # print(emails)
+    # print('invoice no:')
+    # print(invoice_no)
 
-    #for iban in ibans:
     invoice_pattern = '|'.join(invoice_no)
 
     # TODO: Create list of matches, weighted by conditions
 
     condition_iban = (data['contra_iban'].isin(ibans))
     condition_amount = (data['amount'].abs() == amount)
-    condition_invoice_no = (data['comment'].str.contains(invoice_pattern)==True)
+    condition_invoice_no = (data['comment'].str.contains(invoice_pattern) == True)
     condition_date = abs(data['posting_date'] - date) < datetime.timedelta(days=30)
     #matches = data[condition_iban & condition_amount & condition_invoice_no]
-    matches = data[condition_invoice_no & condition_date]
+    #matches = data[condition_invoice_no & condition_date]
 
-    print(matches[['line_id', 'posting_date']])
+    #print(matches[['line_id', 'posting_date']])
+
+    date_weights = match_date(data['posting_date'], date)
+    #print(date_weights)
+
+    print('Date: ' + str(date))
+    result = pd.concat([data, date_weights.rename('weight')], axis=1, sort=False)
+    result = result.sort_values(by=['weight'], ascending=False) # sort by closest
+    result = result.iloc[:10] # keep only top 10
+    print(result[['line_id', 'posting_date', 'weight']])
 
 
 def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
