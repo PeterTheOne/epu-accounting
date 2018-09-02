@@ -40,6 +40,8 @@ def linear_conversion(old_value, old_min, old_max, new_min, new_max):
 
 
 def match_date(csv_dates, date):
+    if date == False:
+        return pd.Series([0] * len(csv_dates), index=csv_dates.index)
     weights = []
     for csv_date in csv_dates:
         weight = 1 - linear_conversion((csv_date - date).days, 0, datetime.timedelta(days=30).days, 0, 1)
@@ -149,7 +151,7 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     if len(dates) > 0:
         date = dates[len(dates) - 1]
     else:
-        date = pd.datetime.now()
+        date = False
 
     # find amount by most common
     amounts.sort(key=Counter(amounts).get, reverse=True) # sort by most common
@@ -170,7 +172,7 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     amount_weights = match_amount(data['amount'], amount)
     date_weights = match_date(data['posting_date'], date)
 
-    weights = (filename_weights*0.3 + iban_weights*0.2 + numbers_weights*0.25 + date_weights*0.1 + amount_weights*0.15)
+    weights = (filename_weights*0.3 + iban_weights*0.1 + numbers_weights*0.3 + date_weights*0.1 + amount_weights*0.2)
 
     print('Date: ' + str(date))
     print('Filename: ' + str(filename_keywords))
