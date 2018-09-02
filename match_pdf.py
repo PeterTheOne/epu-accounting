@@ -3,6 +3,8 @@ import os.path
 from pathlib import Path
 import pandas as pd
 
+import ntpath
+
 import PyPDF2 
 #import textract
 
@@ -46,6 +48,16 @@ def match_date(csv_dates, date):
     return weights
 
 
+def match_filename(csv_comments, keywords):
+    weights = []
+    for csv_comment in csv_comments:
+        matches = re.findall(keywords, str(csv_comment), re.MULTILINE)
+        weight = linear_conversion(len(matches), 0, 3, 0, 1)
+        weights.append( weight )
+    weights = pd.Series(weights, index=csv_comments.index)
+    return weights
+
+
 def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(invoice_file):
         print('Error: File "{0}" doesn\'t exist.'.format(invoice_file))
@@ -77,6 +89,8 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
         #out.write(text)
 
     # extract important info
+    filename_keywords = os.path.splitext(ntpath.basename(invoice_file))[0]
+    filename_keywords = re.split('\W+|_', filename_keywords)
     ibans = re.findall('([A-Z]{2}\d{2}(?:\s?\d{4}){4,8})', text, re.MULTILINE)
     amounts = re.findall('(\d{1,3},\d{2})', text, re.MULTILINE)
     emails = re.findall('\@(.+\..+)', text, re.MULTILINE)
@@ -128,6 +142,8 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     # print(invoice_no)
 
     invoice_pattern = '|'.join(invoice_no)
+    filename_keywords = list(filter(lambda keyword: len(keyword) > 4, filename_keywords)) # filter short
+    filename_pattern = '|'.join(filename_keywords)
 
     # TODO: Create list of matches, weighted by conditions
 
@@ -140,14 +156,18 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
 
     #print(matches[['line_id', 'posting_date']])
 
+    filename_weights = match_filename(data['comment'], filename_pattern)
     date_weights = match_date(data['posting_date'], date)
     #print(date_weights)
 
+    weights = (filename_weights*0.7 + date_weights*0.3)
+
     print('Date: ' + str(date))
-    result = pd.concat([data, date_weights.rename('weight')], axis=1, sort=False)
+    print('Filename: ' + filename_pattern)
+    result = pd.concat([data, weights.rename('weight'), filename_weights.rename('filename_weight'), date_weights.rename('date_weight')], axis=1, sort=False)
     result = result.sort_values(by=['weight'], ascending=False) # sort by closest
     result = result.iloc[:10] # keep only top 10
-    print(result[['line_id', 'posting_date', 'weight']])
+    print(result[['line_id', 'comment', 'weight', 'filename_weight', 'date_weight']])
 
 
 def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
