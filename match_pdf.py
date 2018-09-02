@@ -128,7 +128,7 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     filename_keywords = re.split('\W+|_', filename_keywords)
     ibans = re.findall('([A-Z]{2}\d{2}(?:\s?\d{4}){4,8})', text, re.MULTILINE)
     amounts = re.findall('(\d{1,3},\d{2})', text, re.MULTILINE)
-    emails = re.findall('\@(.+\..+)', text, re.MULTILINE)
+    emails = re.findall('\@(\w+)\..+', text, re.MULTILINE)
     invoice_no = re.findall('(\d{5,20})', text, re.MULTILINE)
 
     # extract dates
@@ -161,11 +161,15 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     else:
         amount = False
 
-    # print('emails:')
-    # print(emails)
-
+    # filter filename keywords
     filename_keywords = list(filter(lambda keyword: len(keyword) > 4, filename_keywords)) # filter short
 
+    # filter keywords in text
+    invoice_no.sort(key=Counter(invoice_no).get, reverse=True) # sort by most common
+    invoice_no = list(set(invoice_no)) # remove duplicates
+    invoice_no = invoice_no[:4] # limit to 4 keywords
+
+    # weights
     filename_weights = match_keywords(data['comment'], filename_keywords)
     iban_weights = match_exact(data['contra_iban'], ibans)
     numbers_weights = match_keywords(data['comment'], invoice_no)
@@ -179,6 +183,7 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     print('IBAN: ' + str(ibans))
     print('Numbers: ' + str(invoice_no))
     print('Amount: ' + str(amount))
+    print('E-Mails: ' + str(emails))
     result = pd.concat([
         data,
         weights.rename('w'),
@@ -188,7 +193,7 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
         date_weights.rename('date_w'),
         amount_weights.rename('amount_w')
     ], axis=1, sort=False)
-    result = result.sort_values(by=['w'], ascending=False) # sort by closest
+    result = result.sort_values(by=['w'], ascending=False) # sort by closest matches
     result = result.iloc[:10] # keep only top 10
     print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w']])
 
