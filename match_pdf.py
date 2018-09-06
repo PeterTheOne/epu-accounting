@@ -52,10 +52,11 @@ def match_date(csv_dates, date):
 
 
 def match_exact(csv_column, values):
+    values = list(map(lambda v: v.lower(), values))
     weights = []
     for csv_row in csv_column:
         if len(values) > 0:
-            if csv_row in values:
+            if str(csv_row).lower() in values: # TODO: str cast?
                 weight = 1
             else:
                 weight = 0
@@ -71,7 +72,7 @@ def match_keywords(csv_comments, keywords):
     pattern = '|'.join(keywords)
     for csv_comment in csv_comments:
         if len(keywords) > 0:
-            matches = re.findall(pattern, str(csv_comment), re.MULTILINE)
+            matches = re.findall(pattern, str(csv_comment), re.IGNORECASE | re.MULTILINE)
             weight = linear_conversion(len(matches), 0, len(keywords), 0, 1)
         else:
             weight = 0
@@ -175,8 +176,9 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     numbers_weights = match_keywords(data['comment'], invoice_no)
     amount_weights = match_amount(data['amount'], amount)
     date_weights = match_date(data['posting_date'], date)
+    emails_weights = match_keywords(data['contra_name'], emails)
 
-    weights = (filename_weights*0.3 + iban_weights*0.1 + numbers_weights*0.3 + date_weights*0.1 + amount_weights*0.2)
+    weights = (filename_weights*0.25 + iban_weights*0.1 + numbers_weights*0.2 + date_weights*0.1 + amount_weights*0.15 + emails_weights*0.2)
 
     print('Date: ' + str(date))
     print('Filename: ' + str(filename_keywords))
@@ -191,11 +193,12 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
         iban_weights.rename('iban_w'),
         numbers_weights.rename('numbers_w'),
         date_weights.rename('date_w'),
-        amount_weights.rename('amount_w')
+        amount_weights.rename('amount_w'),
+        emails_weights.rename('emails_w')
     ], axis=1, sort=False)
     result = result.sort_values(by=['w'], ascending=False) # sort by closest matches
     result = result.iloc[:10] # keep only top 10
-    print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w']])
+    print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
 
 
 def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
