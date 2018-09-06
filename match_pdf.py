@@ -14,6 +14,8 @@ from collections import Counter
 import datetime
 import locale
 
+import unicodedata
+
 #from nltk.tokenize import word_tokenize
 #from nltk.corpus import stopwords
 
@@ -31,6 +33,14 @@ def lerp(a, b, x):
 
 def clamp(num, min_value, max_value):
    return max(min(num, max_value), min_value)
+
+
+def normalize_caseless(text):
+    return unicodedata.normalize("NFKD", text.casefold())
+
+
+def caseless_equal(left, right):
+    return normalize_caseless(left) == normalize_caseless(right)
 
 
 # TODO: min larger than max
@@ -52,11 +62,11 @@ def match_date(csv_dates, date):
 
 
 def match_exact(csv_column, values):
-    values = list(map(lambda v: v.lower(), values))
+    values = list(map(lambda v: normalize_caseless(v), values))
     weights = []
     for csv_row in csv_column:
         if len(values) > 0:
-            if str(csv_row).lower() in values: # TODO: str cast?
+            if normalize_caseless(str(csv_row)) in values: # TODO: str cast?
                 weight = 1
             else:
                 weight = 0
