@@ -12,13 +12,16 @@ def extract_csv(input_file, output_file, csv_date_format='%d.%m.%Y', csv_delimit
                        parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
 
     line_id_regex = '([A-Z]{2}/\d{9})'
-    iban_regex = '([A-Z]{2}\d{14,20})'
+    iban_regex = '([A-Z]{2}[A-Z\d]{14,20})'
+    first_two_words_regex = '([\w\.]+ [\w\.]+)'
 
     data['line_id'] = data['text'].str.extract('(.*) ' + line_id_regex, expand=True)[1]
     data['comment'] = data['text'].str.extract('(.*) ' + line_id_regex, expand=True)[0].str.strip()
     data['contra_iban'] = data['text'].str.extract(iban_regex + ' (.*)', expand=True)[0]
     data['contra_bic'] = data['text'].str.extract(line_id_regex + ' (.*) ' + iban_regex, expand=True)[1]
     data['contra_name'] = data['text'].str.extract(iban_regex + ' (.*)', expand=True)[1]
+    # if nothing matched (no IBAN), try alternative pattern
+    data.loc[data['contra_name'].isnull(),'contra_name'] = data['text'].str.extract(first_two_words_regex + ' (.*) ' + line_id_regex, expand=True)[0]
     data.to_csv(path_or_buf=output_file, index=False,
                 sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
                 date_format=csv_date_format)
