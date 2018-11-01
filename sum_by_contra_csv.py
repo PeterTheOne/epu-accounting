@@ -8,9 +8,7 @@ def sum_by_contra(input_file, output_file, negative, division, contra_name, csv_
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
 
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
     groupby_col = 'comment' if contra_name else 'contra_name'
 
     if negative:
@@ -26,7 +24,7 @@ def sum_by_contra(input_file, output_file, negative, division, contra_name, csv_
     if division > 0:
         hist['sum_divided'] = hist['sum'].apply(lambda x: x/division)
     
-    hist = pd.merge(hist, data[['contra_iban', groupby_col]], how='inner', on=[groupby_col]).drop_duplicates(subset=groupby_col)
+    hist = pd.merge(hist, data[['contra_iban', groupby_col, 'subject']], how='inner', on=[groupby_col]).drop_duplicates(subset=groupby_col)
 
     #print(hist)
     # find what amount is not included because of skipped lines (empty contra_name)?

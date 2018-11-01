@@ -27,7 +27,7 @@ presets = {
         'decimal':     ',',
         'thousands':   '.',
         'col_names':   None, # column names already present
-        'usecols':     ['Datum', 'Name', 'Betreff', 'Brutto', 'Währung'], # include from source
+        'usecols':     ['Datum', 'Name', 'Betreff', 'Brutto', 'Währung', 'Status'], # include from source
         'col_map':     {
             'Name':    'contra_name',
             'Betreff': 'subject',
@@ -50,13 +50,20 @@ def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', d
                        names=col_names, usecols=usecols,
                        parse_dates=date_cols, date_parser=date_parser)
 
+    if preset_name == 'PayPal':
+        # Remove redundant lines
+        data = data[(data['Status'] == 'Abgeschlossen')]
+
+        # Remove unneeded columns
+        data = data.drop('Status', 1)
+
     # Add columns
     data['preset'] = preset_name
 
     # Reformat columns
     if col_map:
         data = data.rename(index=str, columns=col_map)
-    header_list = ['iban', 'text', 'subject', 'value_date', 'posting_date', 'amount', 'currency', 'preset', 'contra_name'] # add missing columns
+    header_list = ['iban', 'text', 'subject', 'value_date', 'posting_date', 'amount', 'currency', 'preset', 'contra_name', 'contra_iban'] # add missing columns
     data = data.reindex(columns = header_list)
 
     data.to_csv(path_or_buf=output_file, index=False, date_format='%d.%m.%Y', sep=',', decimal='.', quotechar='"', encoding='utf-8')
