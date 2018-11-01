@@ -1,36 +1,42 @@
 import argparse
 import os.path
 import pandas as pd
+import locale
 
 
-def sum_by_contra(input_file, output_file, negative, division, contra_name, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def sum_by_contra(input_file, output_file, negative, division, contra_name, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8', csv_decimal=',', csv_thousands='.'):
     if not os.path.isfile(input_file):
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
 
+    locale.setlocale(locale.LC_NUMERIC, '')
+
     date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
-    groupby_col = 'comment' if contra_name else 'contra_name'
+    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, decimal=csv_decimal, thousands=csv_thousands, quotechar=csv_quotechar, encoding=csv_encoding,
+                       parse_dates=['Datum'], date_parser=date_parser)
+    #groupby_col = 'comment' if contra_name else 'contra_name'
+    groupby_col = 'Name'
+
+    data = data[(data['Status'] == 'Abgeschlossen')]
 
     if negative:
-        data = data[(data['amount'] < 0)] # use negative amounts only
+        data = data[(data['Brutto'] < 0)] # use negative amounts only
     else:
-        data = data[(data['amount'] > 0)] # use positive amounts only
+        data = data[(data['Brutto'] > 0)] # use positive amounts only
 
-    if contra_name:
-        data = data[(data['contra_name'] == contra_name)] # data subset
+    #if contra_name:
+    #    data = data[(data['contra_name'] == contra_name)] # data subset
 
-    hist = data.groupby([groupby_col])['amount'].agg('sum').to_frame('sum').sort_values(['sum', groupby_col], ascending=[True, True])
+    hist = data.groupby([groupby_col])['Brutto'].agg('sum').to_frame('sum').sort_values(['sum', groupby_col], ascending=[True, True])
 
     if division > 0:
         hist['sum_divided'] = hist['sum'].apply(lambda x: x/division)
     
-    hist = pd.merge(hist, data[['contra_iban', groupby_col]], how='inner', on=[groupby_col]).drop_duplicates(subset=groupby_col)
+    hist = pd.merge(hist, data[['Typ', groupby_col]], how='inner', on=[groupby_col]).drop_duplicates(subset=groupby_col)
 
     #print(hist)
     # find what amount is not included because of skipped lines (empty contra_name)?
-    total = data['amount'].sum()
+    total = data['Brutto'].sum()
     totalGrouped = hist['sum'].sum()
     totalDelta = total - totalGrouped
     if abs(totalDelta) >= 1:
