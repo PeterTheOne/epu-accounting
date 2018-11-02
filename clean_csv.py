@@ -18,6 +18,25 @@ presets = {
         'col_map':     [],
         'date_cols':   ['value_date', 'posting_date']
     },
+    'paylife': {
+        # todo: select correct 'Währung' column
+        'preset_name': 'PayLife',
+        'encoding':    'utf-8',
+        'date_format': '%d.%m.%Y',
+        'delimiter':   ';',
+        'quotechar':   '"',
+        'decimal':     ',',
+        'thousands':   '.',
+        'col_names':   None, # column names already present
+        'usecols':     ['Abrechnungsdatum', 'Rechnungstext', 'Währung', 'Betrag'], #include from source
+        'col_map':     {
+            'Rechnungstext':    'text',
+            'Abrechnungsdatum': 'value_date',
+            'Betrag':           'amount',
+            'Währung':          'currency'
+        },
+        'date_cols':   ['Abrechnungsdatum']
+    },
     'paypal': {
         'preset_name': 'PayPal',
         'encoding':    'utf-8',
