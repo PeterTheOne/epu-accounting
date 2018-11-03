@@ -19,6 +19,7 @@ import unicodedata
 #from nltk.tokenize import word_tokenize
 #from nltk.corpus import stopwords
 
+
 def convert_strings_to_dates(value, format):
     locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
     try:

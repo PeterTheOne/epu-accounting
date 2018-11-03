@@ -1,5 +1,6 @@
 epu-accounting
 ==============
+FREIHEIT * TRANSPARENZ * GELASSENHEIT
 
 requirements:
 - python 3

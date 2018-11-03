@@ -3,21 +3,7 @@ import os.path
 import pandas as pd
 import sqlite3
 from sqlite3 import Error
-
-
-def create_connection(db_file):
-    """ create a database connection to the SQLite database
-        specified by db_file
-    :param db_file: database file
-    :return: Connection object or None
-    """
-    try:
-        conn = sqlite3.connect(db_file)
-        return conn
-    except Error as e:
-        print(e)
- 
-    return None
+from functions_db import *
 
 
 def import_records(input_file, db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
@@ -27,12 +13,21 @@ def import_records(input_file, db_file, csv_date_format='%d.%m.%Y', csv_delimite
 
     date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
     data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+                       parse_dates=['value_date'], date_parser=date_parser) #, 'posting_date'
 
     # create a database connection
     conn = create_connection(db_file)
     with conn:
-        data.to_sql('records', conn, if_exists='replace')
+        #data.to_sql('records', conn, if_exists='replace')
+
+        for index, row in data.iterrows():
+            # iban,text,subject,value_date,posting_date,amount,currency,preset,contra_name,contra_iban
+            account_id = 2
+            row['value_date'] = '2018-03-07 20:40:39.808427'
+
+            record = (account_id, 0, 0, row['text'], row['value_date'])
+            record_id = create_record(conn, record)
+
     conn.close()
 
 
