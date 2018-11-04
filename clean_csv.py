@@ -28,14 +28,16 @@ presets = {
         'decimal':     ',',
         'thousands':   '.',
         'col_names':   None, # column names already present
-        'usecols':     ['Abrechnungsdatum', 'Rechnungstext', 'Währung', 'Betrag'], #include from source
+        'usecols':     ['Buchungsdatum', 'Transaktionsdatum', 'Abrechnungsdatum', 'Rechnungstext', 'Währung', 'Betrag'], #include from source
         'col_map':     {
-            'Rechnungstext':    'text',
-            'Abrechnungsdatum': 'value_date',
-            'Betrag':           'amount',
-            'Währung':          'currency'
+            'Rechnungstext':     'text',
+            'Buchungsdatum':     'value_date',
+            'Transaktionsdatum': 'posting_date',
+            'Abrechnungsdatum':  'billing_date',
+            'Betrag':            'amount',
+            'Währung':           'currency'
         },
-        'date_cols':   ['Abrechnungsdatum']
+        'date_cols':   ['Buchungsdatum', 'Transaktionsdatum', 'Abrechnungsdatum']
     },
     'paypal': {
         'preset_name': 'PayPal',
@@ -77,12 +79,15 @@ def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', d
         data = data.drop('Status', 1)
 
     # Add columns
-    data['preset'] = preset_name
+    data['import_preset'] = preset_name
 
-    # Reformat columns
+    # Reformat columns # todo: broken?
     if col_map:
         data = data.rename(index=str, columns=col_map)
-    header_list = ['iban', 'text', 'subject', 'value_date', 'posting_date', 'amount', 'currency', 'preset', 'contra_name', 'contra_iban'] # add missing columns
+    # Add missing columns
+    header_list = ['account_id', 'accounting_no', 'ignore',
+        'text', 'value_date', 'posting_date', 'billing_date', 'amount', 'currency',
+        'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset']
     data = data.reindex(columns = header_list)
 
     data.to_csv(path_or_buf=output_file, index=False, date_format='%d.%m.%Y', sep=',', decimal='.', quotechar='"', encoding='utf-8')

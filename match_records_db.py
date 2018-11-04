@@ -16,7 +16,7 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
         accounts = cur.fetchall()
 
         for account in accounts:
-            sql = ''' SELECT * FROM records_temp WHERE account_id = ? ORDER BY value_date DESC '''
+            sql = ''' SELECT * FROM records WHERE account_id = ? ORDER BY value_date DESC '''
             cur = conn.cursor()
             cur.execute(sql, account)
 

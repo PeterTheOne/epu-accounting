@@ -31,7 +31,7 @@ def export_records(db_file, output_path='.', csv_date_format='%d.%m.%Y', csv_del
     conn = create_connection(db_file)
     with conn:
         cur = conn.cursor()
-        cur.execute("SELECT no,path FROM files INNER JOIN records_temp ON files.record_id = records_temp.id ORDER BY records_temp.no")
+        cur.execute("SELECT no,path FROM files INNER JOIN records ON files.record_id = records.id ORDER BY records.no")
 
         rows = cur.fetchall()
 

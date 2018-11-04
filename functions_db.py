@@ -37,8 +37,8 @@ def create_account(conn, account):
     :param account:
     :return: account id
     """
-    sql = ''' INSERT INTO accounts(parent_id,main_account,name)
-              VALUES(?,?,?) '''
+    sql = ''' INSERT INTO accounts(parent_id,main_account,iban,email,creditcard_no,name)
+              VALUES(?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, account)
     return cur.lastrowid
@@ -51,8 +51,10 @@ def create_record(conn, record):
     :param record:
     :return: record id
     """
-    sql = ''' INSERT INTO records_temp(account_id,no,ignore,text,value_date)
-              VALUES(?,?,?,?,?) '''
+    sql = ''' INSERT INTO records(account_id,accounting_no,accounting_date,ignore,
+                    text,value_date,posting_date,billing_date,amount,currency,
+                    subject,line_id,comment,contra_name,contra_iban,contra_bic,import_preset)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, record)
     return cur.lastrowid
