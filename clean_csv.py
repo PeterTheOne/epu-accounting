@@ -48,7 +48,7 @@ presets = {
         'decimal':     ',',
         'thousands':   '.',
         'col_names':   None, # column names already present
-        'usecols':     ['Datum', 'Name', 'Betreff', 'Brutto', 'Währung', 'Status'], # include from source
+        'usecols':     ['Datum', 'Name', 'Betreff', 'Brutto', 'Währung'], # include from source
         'col_map':     {
             'Name':    'contra_name',
             'Betreff': 'subject',
@@ -70,13 +70,6 @@ def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', d
                        decimal=decimal, thousands=thousands,
                        names=col_names, usecols=usecols,
                        parse_dates=date_cols, date_parser=date_parser)
-
-    if preset_name == 'PayPal':
-        # Remove redundant lines
-        data = data[(data['Status'] == 'Abgeschlossen')]
-
-        # Remove unneeded columns
-        data = data.drop('Status', 1)
 
     # Add columns
     data['import_preset'] = preset_name
