@@ -3,6 +3,7 @@ import os.path
 import pandas as pd
 import sqlite3
 from sqlite3 import Error
+from functions_data import *
 from functions_db import *
 
 
@@ -30,7 +31,7 @@ def import_records(input_file, db_file, account_name, csv_date_format='%d.%m.%Y'
 
     date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
     data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date', 'billing_date', 'accounting_date'], date_parser=date_parser)
+                       parse_dates=get_date_cols(), date_parser=date_parser)
 
     # create a database connection
     conn = create_connection(db_file)

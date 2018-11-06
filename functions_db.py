@@ -72,3 +72,13 @@ def create_file(conn, file):
     cur = conn.cursor()
     cur.execute(sql, file)
     return cur.lastrowid
+
+
+# generator to flatten values of irregular nested sequences,
+# modified from answers http://stackoverflow.com/questions/952914/making-a-flat-list-out-of-list-of-lists-in-python
+def flatten(l):
+    for el in l:
+        try:
+            yield from flatten(el)
+        except TypeError:
+            yield el
