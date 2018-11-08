@@ -22,14 +22,14 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
         cur.execute("SELECT id FROM accounts WHERE main_account == 0")
         sec_accounts = cur.fetchall()
 
-        # get transactions from secondary accounts
-        # these need to be matched to transactions in the primary account
+        # get records from secondary accounts
+        # these need to be matched to records in the primary account
         #sql = ''' SELECT * FROM records WHERE account_id IN ({0}) ORDER BY posting_date DESC '''
         #sql = sql.format('?', ','.join('?' * len(sec_accounts)))
         #params = tuple(flatten((sec_accounts))) # add more params next to 'sec_accounts'
         #orphans = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
 
-        # get all transactions
+        # get all records
         sql = ''' SELECT * FROM records ORDER BY posting_date DESC '''
         data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
 
@@ -38,32 +38,65 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
 
         sec_accounts = tuple(flatten((sec_accounts)))
         orphans = data[data.account_id.isin(sec_accounts)]
-        #orphans = orphans.iloc[:3]
 
         #print('main:')
         #print(main.loc[:,['text', 'posting_date', 'amount']])
         #print('orphans:')
         #print(orphans.loc[:,['text', 'billing_date', 'amount']])
 
+        log_matches = 0
+        log_orphans = len(orphans.index)
+
         for index, row in orphans.iterrows():
             date = row['billing_date']
+            print('Searching for record with date: ')
             print(date)
 
-            # filter credit card billing transactions
-            matches = main.loc[main['text'].str.contains(r'(?:PayLife)(?i)')]
+            # filter credit card billing records
+            matches = main.loc[main['text'].str.contains(r'(?:paylife abrechnung)(?i)')]
             #print(matches[['text', 'posting_date', 'amount']])
 
             # weigh by date
             date_weights = match_date(matches['posting_date'], date)
 
-            # list most likely transactions
+            # list most likely records
             result = pd.concat([
                 matches,
                 date_weights.rename('date_w')
             ], axis=1, sort=False)
             result = result.sort_values(by=['date_w'], ascending=False) # sort by closest matches
-            result = result.iloc[:3] # keep only top 3
-            print(result[['text', 'posting_date', 'amount', 'date_w']])
+            result = result.iloc[:1]
+            #print(result[['text', 'posting_date', 'amount', 'date_w']])
+
+            # is there a match?
+            if any(result.date_w > 0.75):
+                log_matches += 1
+
+                match = result.loc[result['date_w'] > 0.75]
+                print('match:')
+                print(match[['text', 'posting_date', 'amount', 'date_w']])
+
+                # update record
+                row_update = row
+                row_update.ignore = 1
+                row_update.accounting_date = date
+                #print('updated record:')
+                #print(row_update[['ignore', 'text', 'accounting_date', 'amount', 'date_w']])
+
+                # write to database
+                sql_date_format = '%Y-%m-%d %H:%M:%S'
+                params = [row_update.accounting_date.strftime(sql_date_format), row_update.ignore, row_update.id]
+
+                cur = conn.cursor()
+                cur.execute("UPDATE records SET accounting_date = ?, ignore = ? WHERE id = ?", params)
+
+                # todo: when to mark credit card billing record as done?
+
+            else:
+                print('NO match!')
+
+        log_notfound = log_orphans - log_matches
+        print('Found {0} matches for {1} records, {2} could not be matched.'.format(log_matches, log_orphans, log_notfound))
 
     conn.close()
 
