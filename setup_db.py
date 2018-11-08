@@ -30,7 +30,7 @@ def main():
                                         accounting_date timestamp,      /* date to be used in accounting */
                                         ignore integer,                 /* boolean */
                                         /* data source; read only */
-                                        text text NOT NULL,
+                                        text text,
                                         value_date timestamp,
                                         posting_date timestamp,
                                         billing_date timestamp,         /* credit card bill date */
@@ -78,6 +78,9 @@ def main():
 
         account_2 = (account_1_id, 0, '', '', '', 'Kreditkarte')
         account_2_id = create_account(conn, account_2)
+
+        account_3 = (account_1_id, 0, '', '', '', 'PayPal')
+        account_3_id = create_account(conn, account_3)
 
         # records
         #record_1 = (account_1_id, 6, 0, 'buchungszeile 1', '2018-03-07 20:40:39.808427')

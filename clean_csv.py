@@ -65,7 +65,7 @@ def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', d
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
     locale.setlocale(locale.LC_NUMERIC, '')
-    date_parser = lambda x: pd.datetime.strptime(x, date_format)
+    date_parser = lambda x: pd.to_datetime(x, format=date_format, errors='coerce')
     data = pd.read_csv(filepath_or_buffer=input_file, delimiter=delimiter, quotechar=quotechar, encoding=encoding, header=0,
                        decimal=decimal, thousands=thousands,
                        names=col_names, usecols=usecols,
