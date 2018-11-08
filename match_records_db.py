@@ -32,49 +32,67 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
         main = data[data.account_id == parent_account_id]
         orphans = data[data.account_id == sec_account_id]
 
-        #print('main:')
-        #print(main.loc[:,['text', 'posting_date', 'amount']])
-        #print('orphans:')
-        #print(orphans.loc[:,['text', 'billing_date', 'amount']])
+        #orphans = orphans.iloc[:10] # debug
 
         log_matches = 0
         log_orphans = len(orphans.index)
 
         for index, row in orphans.iterrows():
-            date = row['billing_date']
-            #print('Searching for record with date: ')
-            #print(date)
+            # get preset
+            preset = row['import_preset'].lower()
+            if preset not in presets:
+                print( 'Preset {} not found, skipping...'.format( preset ) )
+                continue
 
-            # filter credit card billing records
-            matches = main.loc[main['text'].str.contains(r'(?:paylife abrechnung)(?i)')]
-            #print(matches[['text', 'posting_date', 'amount']])
+            current_preset = presets[preset]
 
-            # weigh by date
-            date_weights = match_date(matches['posting_date'], date)
+            # weight fields
+            amount_source_field = current_preset.get('match_weights', {}).get('amount', {}).get('source_field', 'amount')
+            amount_target_field = current_preset.get('match_weights', {}).get('amount', {}).get('target_field', 'amount')
+            date_source_field = current_preset.get('match_weights', {}).get('date', {}).get('source_field', 'posting_date')
+            date_target_field = current_preset.get('match_weights', {}).get('date', {}).get('target_field', 'posting_date')
+
+            # weight factors
+            amount_w_factor = current_preset.get('match_weights', {}).get('amount', {}).get('weight', 0)
+            date_w_factor = current_preset.get('match_weights', {}).get('date', {}).get('weight', 0)
+
+            # orphan values to match
+            amount = row[amount_source_field]
+            date = row[date_source_field]
+
+            #print('Searching for record matching: ')
+            #print(row[[date_source_field, amount_source_field]])
+
+            # filter main (target) records
+            for key, value in current_preset['match_filter'].items():
+                main = main.loc[main[key].str.contains(r'(?:' + value + ')(?i)')]
+
+            # weights
+            amount_weights = match_amount(main[amount_target_field], amount)
+            date_weights = match_date(main[date_target_field], date) # todo: results should always be *after* supplied date
+
+            weights = (date_weights*date_w_factor + amount_weights*amount_w_factor)
 
             # list most likely records
             result = pd.concat([
-                matches,
-                date_weights.rename('date_w')
+                main,
+                weights.rename('w'),
+                date_weights.rename('date_w'),
+                amount_weights.rename('amount_w')
             ], axis=1, sort=False)
-            result = result.sort_values(by=['date_w'], ascending=False) # sort by closest matches
+            result = result.sort_values(by=['w'], ascending=False) # sort by closest matches
             result = result.iloc[:1]
-            #print(result[['text', 'posting_date', 'amount', 'date_w']])
 
             # is the match good enough?
-            if any(result.date_w > 0.75):
+            if any(result.w > 0.75):
                 log_matches += 1
 
-                match = result.loc[result['date_w'] > 0.75]
-                #print('match:')
-                #print(match[['text', 'posting_date', 'amount', 'date_w']])
+                #print(result[['text', date_target_field, amount_target_field, 'w', 'date_w', 'amount_w']])
 
                 # update record
                 row_update = row
                 row_update.ignore = 1
-                row_update.accounting_date = date
-                #print('updated record:')
-                #print(row_update[['ignore', 'text', 'accounting_date', 'amount', 'date_w']])
+                row_update.accounting_date = result.iloc[0].at[date_target_field] # use date from result
 
                 # write to database
                 sql_date_format = '%Y-%m-%d %H:%M:%S'
