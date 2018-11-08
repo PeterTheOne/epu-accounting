@@ -8,36 +8,29 @@ from functions_db import *
 from functions_match import *
 
 
-def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     # create a database connection
     conn = create_connection(db_file)
     with conn:
-        # get primary account
+        # get secondary account
+        sec_account_id = 0
+        parent_account_id = 0
         cur = conn.cursor()
-        cur.execute("SELECT id FROM accounts WHERE main_account == 1")
-        main_account = cur.fetchall()
+        cur.execute("SELECT id,parent_id FROM accounts WHERE name = ?", (account_name,))
+        sec_account = cur.fetchone()
+        sec_account_id = sec_account[0]
+        parent_account_id = sec_account[1]
 
-        # get all secondary accounts
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM accounts WHERE main_account == 0")
-        sec_accounts = cur.fetchall()
-
-        # get records from secondary accounts
-        # these need to be matched to records in the primary account
-        #sql = ''' SELECT * FROM records WHERE account_id IN ({0}) ORDER BY posting_date DESC '''
-        #sql = sql.format('?', ','.join('?' * len(sec_accounts)))
-        #params = tuple(flatten((sec_accounts))) # add more params next to 'sec_accounts'
-        #orphans = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
+        if sec_account_id == 0:
+            print('Error: Account "{0}" doesn\'t exist.'.format(account_name))
+            return
 
         # get all records
-        sql = ''' SELECT * FROM records ORDER BY posting_date DESC '''
+        sql = ''' SELECT * FROM records WHERE ignore != 1 ORDER BY posting_date DESC '''
         data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
 
-        main_account = tuple(flatten((main_account)))
-        main = data[data.account_id.isin(main_account)]
-
-        sec_accounts = tuple(flatten((sec_accounts)))
-        orphans = data[data.account_id.isin(sec_accounts)]
+        main = data[data.account_id == parent_account_id]
+        orphans = data[data.account_id == sec_account_id]
 
         #print('main:')
         #print(main.loc[:,['text', 'posting_date', 'amount']])
@@ -49,8 +42,8 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
 
         for index, row in orphans.iterrows():
             date = row['billing_date']
-            print('Searching for record with date: ')
-            print(date)
+            #print('Searching for record with date: ')
+            #print(date)
 
             # filter credit card billing records
             matches = main.loc[main['text'].str.contains(r'(?:paylife abrechnung)(?i)')]
@@ -68,13 +61,13 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
             result = result.iloc[:1]
             #print(result[['text', 'posting_date', 'amount', 'date_w']])
 
-            # is there a match?
+            # is the match good enough?
             if any(result.date_w > 0.75):
                 log_matches += 1
 
                 match = result.loc[result['date_w'] > 0.75]
-                print('match:')
-                print(match[['text', 'posting_date', 'amount', 'date_w']])
+                #print('match:')
+                #print(match[['text', 'posting_date', 'amount', 'date_w']])
 
                 # update record
                 row_update = row
@@ -92,8 +85,8 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
 
                 # todo: when to mark credit card billing record as done?
 
-            else:
-                print('NO match!')
+            #else:
+                #print('NO match!')
 
         log_notfound = log_orphans - log_matches
         print('Found {0} matches for {1} records, {2} could not be matched.'.format(log_matches, log_orphans, log_notfound))
@@ -104,8 +97,9 @@ def match_records(db_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_qu
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('db_file')
+    parser.add_argument('account_name')
     args = parser.parse_args()
-    match_records(args.db_file)
+    match_records(args.db_file, args.account_name)
 
 
 if __name__ == '__main__':
