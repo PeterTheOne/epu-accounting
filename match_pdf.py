@@ -140,6 +140,9 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     result = result.iloc[:10] # keep only top 10
     print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
 
+    match = result.iloc[:1]
+    return match
+
 
 def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.exists(input_path):
@@ -154,16 +157,37 @@ def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_deli
         sql = ''' SELECT * FROM records'''
         data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
 
-    conn.close()
 
     # batch process all PDFs recursively
     pathlist = Path(input_path).glob('**/*.pdf')
+    log_files = 1
+    log_matches = 0
+    log_inserted = 0
     for path in pathlist:
         # because path is object not string
         path_in_str = str(path)
         print('Processing ' + path_in_str)
-        read_pdf(data, path_in_str)
+        match = read_pdf(data, path_in_str)
 
+        # is the match good enough?
+        if any(match.w > 0.75):
+            log_matches += 1
+
+            # insert file
+            params = [
+                int(match.iloc[0].at['id']),
+                path_in_str
+            ]
+            print(params)
+
+            cur.execute("INSERT INTO files (record_id,path) VALUES (?,?)", params)
+            log_inserted += cur.rowcount
+
+        log_files += 1
+
+    conn.close()
+
+    print('Found {0} matching records for {1} files, {2} inserted.'.format(log_matches, log_files, log_inserted))
 
 def main():
     parser = argparse.ArgumentParser()
