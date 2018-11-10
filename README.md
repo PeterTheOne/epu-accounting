@@ -17,3 +17,12 @@ recommended order of running scripts:
 - text_histogram
 - apply_blacklist_text
 - timesplit
+
+- clean
+- setup_db
+- csv_to_db
+- match_records_db
+- match_pdf
+- number_db
+- number_pdf
+- db_to_csv

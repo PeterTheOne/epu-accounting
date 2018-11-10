@@ -98,14 +98,15 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
 
                 #print(result[['text', date_target_field, amount_target_field, 'w', 'date_w', 'amount_w']])
 
-                # update record
+                # update orphan record
                 sql_date_format = '%Y-%m-%d %H:%M:%S'
                 params = [
+                    int(result.iloc[0].at['id']),
                     result.iloc[0].at[date_target_field].strftime(sql_date_format), # use date from result
                     constants.STATUS_DONE,
                     row.id
                 ]
-                cur.execute("UPDATE records SET accounting_date = ?, status = ? WHERE id = ?", params)
+                cur.execute("UPDATE records SET parent_id = ?, accounting_date = ?, status = ? WHERE id = ?", params)
                 log_updated += cur.rowcount
 
                 # update main record

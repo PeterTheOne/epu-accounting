@@ -24,11 +24,12 @@ def main():
     sql_create_records_table = """ CREATE TABLE IF NOT EXISTS records (
                                         /* only in database */
                                         id integer PRIMARY KEY,
+                                        parent_id integer DEFAULT 0,
                                         account_id integer NOT NULL,    /* foreign key */
                                         /* accounting */
                                         accounting_no integer,
                                         accounting_date timestamp,      /* date to be used in accounting */
-                                        status integer,
+                                        status integer DEFAULT 0,
                                         /* data source; read only */
                                         text text,
                                         value_date timestamp,
@@ -50,6 +51,7 @@ def main():
                                         'email',
                                         'creditcard_no'
                                         */
+                                        FOREIGN KEY (parent_id) REFERENCES records (id),
                                         FOREIGN KEY (account_id) REFERENCES accounts (id)
                                     ); """
 

@@ -51,10 +51,10 @@ def create_record(conn, record):
     :param record:
     :return: record id
     """
-    sql = ''' INSERT INTO records(account_id,accounting_no,accounting_date,status,
+    sql = ''' INSERT INTO records(parent_id,account_id,accounting_no,accounting_date,status,
                     text,value_date,posting_date,billing_date,amount,currency,
                     subject,line_id,comment,contra_name,contra_iban,contra_bic,import_preset)
-              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, record)
     return cur.lastrowid
