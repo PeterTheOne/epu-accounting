@@ -2,6 +2,8 @@ import argparse
 import os.path
 from pathlib import Path
 import pandas as pd
+import sqlite3
+from sqlite3 import Error
 
 import ntpath
 
@@ -19,6 +21,8 @@ import unicodedata
 #from nltk.tokenize import word_tokenize
 #from nltk.corpus import stopwords
 
+from functions_data import *
+from functions_db import *
 from functions_match import *
 
 
@@ -137,19 +141,20 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
 
 
-def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.exists(input_path):
         print('Error: No such directory "{0}".'.format(input_path))
         return
 
-    if not os.path.isfile(csv_file):
-        print('Error: File "{0}" doesn\'t exist.'.format(csv_file))
-        return
+    # create a database connection
+    conn = create_connection(db_file)
 
-    # read csv
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=csv_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    with conn:
+        cur = conn.cursor()
+        sql = ''' SELECT * FROM records'''
+        data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
+
+    conn.close()
 
     # batch process all PDFs recursively
     pathlist = Path(input_path).glob('**/*.pdf')
@@ -162,10 +167,10 @@ def batch_read_pdf(csv_file, input_path='.', csv_date_format='%d.%m.%Y', csv_del
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('csv_file')
+    parser.add_argument('db_file')
     parser.add_argument('input_path')
     args = parser.parse_args()
-    batch_read_pdf(args.csv_file, args.input_path)
+    batch_read_pdf(args.db_file, args.input_path)
 
 
 if __name__ == '__main__':
