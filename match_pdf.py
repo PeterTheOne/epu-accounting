@@ -158,32 +158,31 @@ def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_deli
         data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
 
 
-    # batch process all PDFs recursively
-    pathlist = Path(input_path).glob('**/*.pdf')
-    log_files = 1
-    log_matches = 0
-    log_inserted = 0
-    for path in pathlist:
-        # because path is object not string
-        path_in_str = str(path)
-        print('Processing ' + path_in_str)
-        match = read_pdf(data, path_in_str)
+        # batch process all PDFs recursively
+        pathlist = Path(input_path).glob('**/*.pdf')
+        log_files = 1
+        log_matches = 0
+        log_inserted = 0
+        for path in pathlist:
+            # because path is object not string
+            path_in_str = str(path)
+            print('Processing ' + path_in_str)
+            match = read_pdf(data, path_in_str)
 
-        # is the match good enough?
-        if any(match.w > 0.75):
-            log_matches += 1
+            # is the match good enough?
+            if any(match.w > 0.75):
+                log_matches += 1
 
-            # insert file
-            params = [
-                int(match.iloc[0].at['id']),
-                path_in_str
-            ]
-            print(params)
+                # insert file
+                params = [
+                    int(match.iloc[0].at['id']),
+                    path_in_str
+                ]
 
-            cur.execute("INSERT INTO files (record_id,path) VALUES (?,?)", params)
-            log_inserted += cur.rowcount
+                cur.execute("INSERT INTO files (record_id,path) VALUES (?,?)", params)
+                log_inserted += cur.rowcount
 
-        log_files += 1
+            log_files += 1
 
     conn.close()
 
