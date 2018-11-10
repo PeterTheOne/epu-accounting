@@ -2,10 +2,11 @@ import argparse
 import os.path
 import pandas as pd
 import locale
-from functions_data import *
+
+import presets
 
 
-def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, usecols=[], col_map=[], date_cols=[], match_filter=[], match_weights=[]):
+def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, usecols=[], col_map=[], date_cols=[]):
     if not os.path.isfile(input_file):
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
@@ -32,7 +33,7 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
 
 
 def clean_from_preset(input_file, output_file, preset):
-    current_preset = presets[preset]
+    current_preset = presets.PRESETS[preset]
     print( 'Using preset {}'.format( current_preset['preset_name'] ) )
     clean_csv(input_file, output_file, preset, **current_preset)
 

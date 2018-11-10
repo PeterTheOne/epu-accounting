@@ -5,6 +5,7 @@ import sqlite3
 from sqlite3 import Error
 
 import constants
+import presets_matching
 from functions_data import *
 from functions_db import *
 from functions_match import *
@@ -41,23 +42,28 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
         log_updated = 0
 
         for index, row in orphans.iterrows():
-            # get preset
-            preset = row['import_preset']
-            if preset not in presets:
-                print( 'Preset {} not found, skipping...'.format( preset ) )
+            # get presets
+            source_preset_key = row['import_preset']
+            target_preset_key = row['import_preset']
+            if source_preset_key not in presets_matching.PRESETS_MATCHING:
+                print( 'Preset {} not found, skipping...'.format( source_preset_key ) )
+                continue
+            if target_preset_key not in presets_matching.PRESETS_MATCHING:
+                print( 'Preset {} not found, skipping...'.format( target_preset_key ) )
                 continue
 
-            current_preset = presets[preset]
+            source_preset = presets_matching.PRESETS_MATCHING[source_preset_key]
+            target_preset = presets_matching.PRESETS_MATCHING[target_preset_key]
 
             # weight fields
-            amount_source_field = current_preset.get('match_weights', {}).get('amount', {}).get('source_field', 'amount')
-            amount_target_field = current_preset.get('match_weights', {}).get('amount', {}).get('target_field', 'amount')
-            date_source_field = current_preset.get('match_weights', {}).get('date', {}).get('source_field', 'posting_date')
-            date_target_field = current_preset.get('match_weights', {}).get('date', {}).get('target_field', 'posting_date')
+            amount_source_field = source_preset.get('match_fields', {}).get('amount', 'amount')
+            amount_target_field = target_preset.get('match_fields', {}).get('amount', 'amount')
+            date_source_field = source_preset.get('match_fields', {}).get('date', 'posting_date')
+            date_target_field = target_preset.get('match_fields', {}).get('date', 'posting_date')
 
             # weight factors
-            amount_w_factor = current_preset.get('match_weights', {}).get('amount', {}).get('weight', 0)
-            date_w_factor = current_preset.get('match_weights', {}).get('date', {}).get('weight', 0)
+            amount_w_factor = source_preset.get('match_weights', {}).get('amount', 0)
+            date_w_factor = source_preset.get('match_weights', {}).get('date', 0)
 
             # orphan values to match
             amount = row[amount_source_field]
@@ -67,7 +73,7 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
             #print(row[[date_source_field, amount_source_field]])
 
             # filter main (target) records
-            for key, value in current_preset['match_filter'].items():
+            for key, value in source_preset['match_filter'].items():
                 main = main.loc[main[key].str.contains(r'(?:' + value + ')(?i)')]
 
             # weights
