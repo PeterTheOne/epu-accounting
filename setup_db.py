@@ -28,7 +28,7 @@ def main():
                                         /* accounting */
                                         accounting_no integer,
                                         accounting_date timestamp,      /* date to be used in accounting */
-                                        ignore integer,                 /* boolean */
+                                        status integer,
                                         /* data source; read only */
                                         text text,
                                         value_date timestamp,

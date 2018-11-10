@@ -3,6 +3,8 @@ import os.path
 import pandas as pd
 import sqlite3
 from sqlite3 import Error
+
+import constants
 from functions_data import *
 from functions_db import *
 from functions_match import *
@@ -26,8 +28,8 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
             return
 
         # get all records
-        sql = ''' SELECT * FROM records WHERE ignore != 1 ORDER BY posting_date DESC '''
-        data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
+        sql = ''' SELECT * FROM records WHERE status = ? ORDER BY posting_date DESC '''
+        data = pd.read_sql(sql, conn, params=[constants.STATUS_NONE], parse_dates=get_date_cols())
 
         main = data[data.account_id == parent_account_id]
         orphans = data[data.account_id == sec_account_id]
@@ -39,7 +41,7 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
 
         for index, row in orphans.iterrows():
             # get preset
-            preset = row['import_preset'].lower()
+            preset = row['import_preset']
             if preset not in presets:
                 print( 'Preset {} not found, skipping...'.format( preset ) )
                 continue
@@ -91,15 +93,15 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
 
                 # update record
                 row_update = row
-                row_update.ignore = 1
+                row_update.status = constants.STATUS_DONE
                 row_update.accounting_date = result.iloc[0].at[date_target_field] # use date from result
 
                 # write to database
                 sql_date_format = '%Y-%m-%d %H:%M:%S'
-                params = [row_update.accounting_date.strftime(sql_date_format), row_update.ignore, row_update.id]
+                params = [row_update.accounting_date.strftime(sql_date_format), row_update.status, row_update.id]
 
                 cur = conn.cursor()
-                cur.execute("UPDATE records SET accounting_date = ?, ignore = ? WHERE id = ?", params)
+                cur.execute("UPDATE records SET accounting_date = ?, status = ? WHERE id = ?", params)
 
                 # todo: when to mark credit card billing record as done?
 

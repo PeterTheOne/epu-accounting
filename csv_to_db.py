@@ -3,6 +3,8 @@ import os.path
 import pandas as pd
 import sqlite3
 from sqlite3 import Error
+
+import constants
 from functions_data import *
 from functions_db import *
 
@@ -39,7 +41,7 @@ def import_records(input_file, db_file, account_name, csv_date_format='%d.%m.%Y'
         data['account_id'] = account_id
         # set defaults
         data['accounting_no'] = 0
-        data['ignore'] = 0
+        data['status'] = constants.STATUS_NONE
         # todo: save in account table
         if 'iban' in data.columns:
             data.drop(columns=['iban'])

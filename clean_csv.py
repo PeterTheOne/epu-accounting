@@ -5,7 +5,7 @@ import locale
 from functions_data import *
 
 
-def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, usecols=[], col_map=[], date_cols=[]):
+def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, usecols=[], col_map=[], date_cols=[], match_filter=[], match_weights=[]):
     if not os.path.isfile(input_file):
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
@@ -17,13 +17,13 @@ def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', d
                        parse_dates=date_cols, date_parser=date_parser)
 
     # Add columns
-    data['import_preset'] = preset_name # todo: default value
+    data['import_preset'] = preset_key # todo: default value
 
     # Reformat columns # todo: broken?
     if col_map:
         data = data.rename(index=str, columns=col_map)
     # Add missing columns
-    header_list = ['account_id', 'accounting_no', 'ignore',
+    header_list = ['account_id', 'accounting_no', 'status',
         'text', 'value_date', 'posting_date', 'billing_date', 'amount', 'currency',
         'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset']
     data = data.reindex(columns = header_list)
@@ -34,7 +34,7 @@ def clean_csv(input_file, output_file, preset_name='', date_format='%d.%m.%Y', d
 def clean_from_preset(input_file, output_file, preset):
     current_preset = presets[preset]
     print( 'Using preset {}'.format( current_preset['preset_name'] ) )
-    clean_csv(input_file, output_file, **current_preset)
+    clean_csv(input_file, output_file, preset, **current_preset)
 
 
 def main():
