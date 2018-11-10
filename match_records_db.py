@@ -38,6 +38,7 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
 
         log_matches = 0
         log_orphans = len(orphans.index)
+        log_updated = 0
 
         for index, row in orphans.iterrows():
             # get preset
@@ -92,24 +93,29 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
                 #print(result[['text', date_target_field, amount_target_field, 'w', 'date_w', 'amount_w']])
 
                 # update record
-                row_update = row
-                row_update.status = constants.STATUS_DONE
-                row_update.accounting_date = result.iloc[0].at[date_target_field] # use date from result
-
-                # write to database
                 sql_date_format = '%Y-%m-%d %H:%M:%S'
-                params = [row_update.accounting_date.strftime(sql_date_format), row_update.status, row_update.id]
-
-                cur = conn.cursor()
+                params = [
+                    result.iloc[0].at[date_target_field].strftime(sql_date_format), # use date from result
+                    constants.STATUS_DONE,
+                    row.id
+                ]
                 cur.execute("UPDATE records SET accounting_date = ?, status = ? WHERE id = ?", params)
+                log_updated += cur.rowcount
 
+                # update main record
                 # todo: when to mark credit card billing record as done?
+                params = [
+                    constants.STATUS_IGNORE,
+                    int(result.iloc[0].at['id'])
+                ]
+                cur.execute("UPDATE records SET status = ? WHERE id = ?", params)
+                log_updated += cur.rowcount
 
             #else:
                 #print('NO match!')
 
         log_notfound = log_orphans - log_matches
-        print('Found {0} matches for {1} records, {2} could not be matched.'.format(log_matches, log_orphans, log_notfound))
+        print('Found {0} matches for {1} records, {2} updated, {3} could not be matched.'.format(log_matches, log_orphans, log_updated, log_notfound))
 
     conn.close()
 
