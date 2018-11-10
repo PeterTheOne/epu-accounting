@@ -26,12 +26,14 @@ def linear_conversion(old_value, old_min, old_max, new_min, new_max):
     return clamp(abs(new_value), 0, 1)
 
 
-def match_date(csv_dates, date):
+def match_date(csv_dates, date, range_days=30, future_only=False):
     if date == False:
         return pd.Series([0] * len(csv_dates), index=csv_dates.index)
     weights = []
     for csv_date in csv_dates:
-        weight = 1 - linear_conversion((csv_date - date).days, 0, datetime.timedelta(days=30).days, 0, 1)
+        weight = 1 - linear_conversion((csv_date - date).days, 0, datetime.timedelta(days=range_days).days, 0, 1)
+        if future_only and csv_date < date:
+            weight = 0
         weights.append( weight )
         #print(str(csv_date - date) + ' to ' + str(weight))
     weights = pd.Series(weights, index=csv_dates.index)

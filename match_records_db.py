@@ -11,7 +11,7 @@ from functions_db import *
 from functions_match import *
 
 
-def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def match_records(db_file, account_name, include_all=False, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     # create a database connection
     conn = create_connection(db_file)
     with conn:
@@ -29,8 +29,13 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
             return
 
         # get all records
-        sql = ''' SELECT * FROM records WHERE status = ? ORDER BY posting_date DESC '''
-        data = pd.read_sql(sql, conn, params=[constants.STATUS_NONE], parse_dates=get_date_cols())
+        params = []
+        sql = ''' SELECT * FROM records '''
+        if not include_all:
+            sql = sql + '''WHERE status = ? '''
+            params = [constants.STATUS_NONE]
+        sql = sql + '''ORDER BY posting_date DESC '''
+        data = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
 
         main = data[data.account_id == parent_account_id]
         orphans = data[data.account_id == sec_account_id]
@@ -78,7 +83,7 @@ def match_records(db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimit
 
             # weights
             amount_weights = match_amount(main[amount_target_field], amount)
-            date_weights = match_date(main[date_target_field], date) # todo: results should always be *after* supplied date
+            date_weights = match_date(main[date_target_field], date, range_days=30, future_only=True) # results should always be *after* supplied date
 
             weights = (date_weights*date_w_factor + amount_weights*amount_w_factor)
 
@@ -131,8 +136,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('db_file')
     parser.add_argument('account_name')
+    parser.add_argument('--include_all', dest='include_all', action='store_true')
+    parser.add_argument('--exclude_unfinished', dest='include_all', action='store_false')
+    parser.set_defaults(include_all=False)
     args = parser.parse_args()
-    match_records(args.db_file, args.account_name)
+    match_records(args.db_file, args.account_name, args.include_all)
 
 
 if __name__ == '__main__':
