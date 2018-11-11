@@ -3,6 +3,7 @@ import os.path
 import pandas as pd
 import locale
 
+import constants
 import presets
 
 
@@ -19,19 +20,19 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
 
     if preset_key == 'paypal':
         # Filter redundant rows
-        filtered = data.loc[data['Typ'] != 'Bankgutschrift auf PayPal-Konto']
-        filtered = filtered.loc[filtered['Währung'] == 'EUR']
+        data.insert(0, 'status', 0)
+        data.loc[data['Typ'] == 'Bankgutschrift auf PayPal-Konto', 'status'] = constants.STATUS_IGNORE
+        data.loc[data['Währung'] != 'EUR', 'status'] = constants.STATUS_IGNORE
 
         # Find parent transaction to get missing data (Name)
-        filtered = pd.merge(filtered, data[['Transaktionscode', 'Name']], how='left', left_on=['Zugehöriger Transaktionscode'], right_on=['Transaktionscode'])
+        data = pd.merge(data, data[['Transaktionscode', 'Name']], how='left', left_on=['Zugehöriger Transaktionscode'], right_on=['Transaktionscode'])
         
         # Set missing data
-        filtered['Name_x'] = filtered['Name_x'].fillna(filtered['Name_y'])
-        filtered.rename(index=str, columns={"Name_x": "Name"}, inplace=True)
+        data['Name_x'] = data['Name_x'].fillna(data['Name_y'])
+        data.rename(index=str, columns={"Name_x": "Name"}, inplace=True)
         
         # Clean up unneeded columns
-        filtered.drop(columns=['Name_y', 'Typ', 'Zugehöriger Transaktionscode', 'Transaktionscode_x', 'Transaktionscode_y'], inplace=True)
-        data = filtered
+        data.drop(columns=['Name_y', 'Typ', 'Zugehöriger Transaktionscode', 'Transaktionscode_x', 'Transaktionscode_y'], inplace=True)
 
     # Add columns
     data['import_preset'] = preset_key # todo: default value
