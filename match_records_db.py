@@ -82,7 +82,7 @@ def match_records(db_file, account_name, include_all=False, csv_date_format='%d.
                 main = main.loc[main[key].str.contains(r'(?:' + value + ')(?i)')]
 
             # weights
-            amount_weights = match_amount(main[amount_target_field], amount)
+            amount_weights = match_amount(main[amount_target_field], amount, abs=False)
             date_weights = match_date(main[date_target_field], date, range_days=30, future_only=True) # results should always be *after* supplied date
 
             weights = (date_weights*date_w_factor + amount_weights*amount_w_factor)
