@@ -17,6 +17,22 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
                        names=col_names, usecols=usecols,
                        parse_dates=date_cols, date_parser=date_parser)
 
+    if preset_key == 'paypal':
+        # Filter redundant rows
+        filtered = data.loc[data['Typ'] != 'Bankgutschrift auf PayPal-Konto']
+        filtered = filtered.loc[filtered['Währung'] == 'EUR']
+
+        # Find parent transaction to get missing data (Name)
+        filtered = pd.merge(filtered, data[['Transaktionscode', 'Name']], how='left', left_on=['Zugehöriger Transaktionscode'], right_on=['Transaktionscode'])
+        
+        # Set missing data
+        filtered['Name_x'] = filtered['Name_x'].fillna(filtered['Name_y'])
+        filtered.rename(index=str, columns={"Name_x": "Name"}, inplace=True)
+        
+        # Clean up unneeded columns
+        filtered.drop(columns=['Name_y', 'Typ', 'Zugehöriger Transaktionscode', 'Transaktionscode_x', 'Transaktionscode_y'], inplace=True)
+        data = filtered
+
     # Add columns
     data['import_preset'] = preset_key # todo: default value
 

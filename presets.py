@@ -42,7 +42,7 @@ PRESETS = {
         'decimal':     ',',
         'thousands':   '.',
         'col_names':   None, # column names already present
-        'usecols':     ['Datum', 'Name', 'Betreff', 'Brutto', 'Währung'], # include from source
+        'usecols':     ['Datum', 'Name', 'Typ', 'Betreff', 'Brutto', 'Währung', 'Transaktionscode', 'Zugehöriger Transaktionscode'], # include from source
         'col_map':     {
             'Name':    'contra_name',
             'Betreff': 'subject',
