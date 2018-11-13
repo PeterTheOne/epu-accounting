@@ -49,7 +49,7 @@ def match_records(db_file, account_name, include_all=False, csv_date_format='%d.
         for index, row in orphans.iterrows():
             # get presets
             source_preset_key = row['import_preset']
-            target_preset_key = row['import_preset']
+            target_preset_key = main.iloc[0].at['import_preset']
             if source_preset_key not in presets_matching.PRESETS_MATCHING:
                 print( 'Preset {} not found, skipping...'.format( source_preset_key ) )
                 continue
