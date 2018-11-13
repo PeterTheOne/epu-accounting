@@ -2,14 +2,16 @@ import argparse
 import os.path
 import pandas as pd
 
+from functions_data import *
+
 
 def extract_csv(input_file, output_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(input_file):
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
+    date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
     data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+                       parse_dates=get_date_cols(), date_parser=date_parser)
 
     line_id_regex = '([A-Z]{2}/\d{9})'
     iban_regex = '([A-Z]{2}[A-Z\d]{14,20})'
