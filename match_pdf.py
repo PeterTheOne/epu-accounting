@@ -21,6 +21,7 @@ import unicodedata
 #from nltk.tokenize import word_tokenize
 #from nltk.corpus import stopwords
 
+import constants
 from functions_data import *
 from functions_db import *
 from functions_match import *
@@ -154,9 +155,9 @@ def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_deli
 
     with conn:
         cur = conn.cursor()
-        sql = ''' SELECT * FROM records'''
-        data = pd.read_sql(sql, conn, parse_dates=get_date_cols())
-
+        sql = ''' SELECT * FROM records WHERE status != ? '''
+        params = [constants.STATUS_IGNORE]
+        data = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
 
         # batch process all PDFs recursively
         pathlist = Path(input_path).glob('**/*.pdf')
@@ -170,7 +171,7 @@ def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_deli
             match = read_pdf(data, path_in_str)
 
             # is the match good enough?
-            if any(match.w > 0.75):
+            if any(match.w > 0.3):
                 log_matches += 1
 
                 # insert file
