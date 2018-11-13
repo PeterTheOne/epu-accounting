@@ -70,11 +70,11 @@ def match_keywords(csv_comments, keywords):
     return weights
 
 
-def match_amount(csv_amounts, amount, abs=True, invert=False):
+def match_amount(csv_amounts, amount, absolute=True, invert=False):
     weights = []
     for csv_amount in csv_amounts:
-        if amount != False:
-            if abs:
+        if amount != False and csv_amount != False:
+            if absolute:
                 diff = abs(csv_amount) - abs(amount)
             elif invert:
                 diff = max(csv_amount, -amount) - min(csv_amount, -amount)

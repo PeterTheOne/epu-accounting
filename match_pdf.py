@@ -114,7 +114,7 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     filename_weights = match_keywords(data['comment'], filename_keywords)
     iban_weights = match_exact(data['contra_iban'], ibans)
     numbers_weights = match_keywords(data['comment'], invoice_no)
-    amount_weights = match_amount(data['amount'], amount)
+    amount_weights = match_amount(data['amount'], amount, absolute=True)
     date_weights = match_date(data['posting_date'], date)
     emails_weights = match_keywords(data['contra_name'], emails)
 
