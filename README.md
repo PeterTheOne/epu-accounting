@@ -19,6 +19,7 @@ recommended order of running scripts:
 - timesplit
 
 - clean
+- extract
 - setup_db
 - csv_to_db
 - match_records_db

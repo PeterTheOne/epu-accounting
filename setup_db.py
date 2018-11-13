@@ -75,14 +75,17 @@ def main():
         create_table(conn, sql_create_files_table)
 
         # create accounts
-        account_1 = (0, 1, '', '', '', 'PSK')
+        account_1 = (0, 1, '', '', '', 'Private')
         account_1_id = create_account(conn, account_1)
 
-        account_2 = (account_1_id, 0, '', '', '', 'Kreditkarte')
+        account_2 = (0, 1, '', '', '', 'Work')
         account_2_id = create_account(conn, account_2)
 
-        account_3 = (account_1_id, 0, '', '', '', 'PayPal')
+        account_3 = (account_2_id, 0, '', '', '', 'Kreditkarte')
         account_3_id = create_account(conn, account_3)
+
+        account_4 = (account_2_id, 0, '', '', '', 'PayPal')
+        account_4_id = create_account(conn, account_4)
 
         # records
         #record_1 = (account_1_id, 6, 0, 'buchungszeile 1', '2018-03-07 20:40:39.808427')
