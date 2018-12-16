@@ -14,7 +14,7 @@ def extract_csv(input_file, output_file, csv_date_format='%d.%m.%Y', csv_delimit
                        parse_dates=get_date_cols(), date_parser=date_parser)
 
     line_id_regex = '([A-Z]{2}/\d{9})'
-    iban_regex = '([A-Z]{2}[A-Z\d]{14,20})'
+    iban_regex = '([A-Z]{2}[\d]{2}[A-Z\d]{12,18})'
     first_two_words_regex = '([\w\.]+ [\w\.]+)'
     word_regex = '([a-zA-Z_]{3,})'
 
