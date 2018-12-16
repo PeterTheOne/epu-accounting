@@ -1,6 +1,7 @@
 import argparse
 import os.path
 import pandas as pd
+import re
 
 
 def apply_blacklist_text(input_file, blacklist_file, output_file, blacklist_column='text', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
@@ -15,6 +16,7 @@ def apply_blacklist_text(input_file, blacklist_file, output_file, blacklist_colu
                        parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
 
     blacklist = pd.read_csv(filepath_or_buffer=blacklist_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
+    blacklist[blacklist_column] = blacklist[blacklist_column].map(lambda x: re.escape(x))
 
     data = data[~data[blacklist_column].str.contains('|'.join(blacklist[blacklist_column]))]
 
