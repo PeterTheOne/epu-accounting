@@ -3,14 +3,7 @@ import os.path
 import pandas as pd
 
 
-def contra_histogram(input_file, output_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
-    if not os.path.isfile(input_file):
-        print('Error: File "{0}" don\'t exist.'.format(input_file))
-        return
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
-
+def contra_histogram(data):
     pd.set_option('max_colwidth', 800)
     line_id_regex = '([A-Z]{2}/\d{9})'
     iban_regex = ' ([A-Z]{2}\d{14,20}) '
@@ -24,30 +17,48 @@ def contra_histogram(input_file, output_file, csv_date_format='%d.%m.%Y', csv_de
         .str.replace(old_account_regex, '').str.replace(bic_regex, '').str.replace(blz_regex, '') \
         .str.replace(date_regex, '').replace('\s+', ' ', regex=True).str.strip()
 
-    def find_ngrams(input_list, n=2):
-        return list(zip(*[input_list[i:] for i in range(n)]))
+    def ngram_string_list_combined(data, start=1, end=5):
+        def ngram_string_list(data, n=2):
+            def find_ngrams(input_list, n=2):
+                return list(zip(*[input_list[i:] for i in range(n)]))
 
-    data['bigrams'] = data['text_clean'].map(lambda x: find_ngrams(x.split(" "), 2))
-    #print(data['bigrams'])
-    bigrams = pd.DataFrame(data['bigrams'].sum())
-    hist = bigrams.groupby([0, 1]).size().to_frame('count').sort_values(['count'], ascending=[False])
-    hist.reset_index(level=hist.index.names, inplace=True)
-    hist['text'] = hist[0].astype(str) + ' ' + hist[1]
-    hist = hist[['text', 'count']]
-    #print(hist)
+            text_clean = data['text_clean'].tolist()
+            l = list(map(lambda x: find_ngrams(x.split(" "), n), text_clean))
+            flat_l = [item for sublist in l for item in sublist]
+            return list(map(lambda x: ' '.join(x), flat_l))
 
-    hist.to_csv(path_or_buf=output_file, index=False,
-                sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                date_format=csv_date_format, index_label=['first', 'second', 'count'])
+        strings = []
+        for n in range(start, end + 1):
+            for i in range(n):
+                strings.extend(ngram_string_list(data, n))
+                #print('n: {}, i: {}'.format(n, i))
+        return strings
+
+    ngram_strings = ngram_string_list_combined(data, 1, 5)
+    #print(ngram_strings)
+    hist = pd.DataFrame(data={'text': ngram_strings})
+    hist = hist.groupby(['text']).size().to_frame('weight').sort_values(['weight'], ascending=[False])
+    print(hist)
+
+    return hist
 
 
-
-def main():
+def main(csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file')
     parser.add_argument('output_file')
     args = parser.parse_args()
-    contra_histogram(args.input_file, args.output_file)
+
+    if not os.path.isfile(args.input_file):
+        print('Error: File "{0}" don\'t exist.'.format(args.input_file))
+        return
+    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
+    data = pd.read_csv(filepath_or_buffer=args.input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
+                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    hist = contra_histogram(data)
+    hist.to_csv(path_or_buf=args.output_file, index=False,
+                sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
+                date_format=csv_date_format, index_label=['first', 'second', 'count'])
 
 
 if __name__ == '__main__':

@@ -8,9 +8,6 @@ import presets
 
 
 def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, usecols=[], col_map=[], date_cols=[]):
-    if not os.path.isfile(input_file):
-        print('Error: File "{0}" don\'t exist.'.format(input_file))
-        return
     locale.setlocale(locale.LC_NUMERIC, '')
     date_parser = lambda x: pd.to_datetime(x, format=date_format, errors='coerce')
     data = pd.read_csv(filepath_or_buffer=input_file, delimiter=delimiter, quotechar=quotechar, encoding=encoding, header=0,
@@ -43,16 +40,19 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
     # Add missing columns
     header_list = ['account_id', 'accounting_no', 'status',
         'text', 'value_date', 'posting_date', 'billing_date', 'amount', 'currency',
-        'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset']
-    data = data.reindex(columns = header_list)
+        'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset', 'account']
+    data = data.reindex(columns=header_list)
 
-    data.to_csv(path_or_buf=output_file, index=False, date_format='%d.%m.%Y', sep=',', decimal='.', quotechar='"', encoding='utf-8')
+    if output_file:
+        data.to_csv(path_or_buf=output_file, index=False, date_format='%d.%m.%Y', sep=',', decimal='.', quotechar='"', encoding='utf-8')
+    return data
 
 
+# todo: detect preset if not set
 def clean_from_preset(input_file, output_file, preset):
     current_preset = presets.PRESETS[preset]
     print( 'Using preset {}'.format( current_preset['preset_name'] ) )
-    clean_csv(input_file, output_file, preset, **current_preset)
+    return clean_csv(input_file, output_file, preset, **current_preset)
 
 
 def main():
@@ -61,6 +61,9 @@ def main():
     parser.add_argument('output_file')
     parser.add_argument('--preset', default='psk')
     args = parser.parse_args()
+    if not os.path.isfile(args.input_file):
+        print('Error: File "{0}" don\'t exist.'.format(args.input_file))
+        return
     clean_from_preset(args.input_file, args.output_file, args.preset)
 
 
