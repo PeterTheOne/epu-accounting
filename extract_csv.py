@@ -36,7 +36,7 @@ def main(csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_e
     data = pd.read_csv(filepath_or_buffer=args.input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
                        parse_dates=get_date_cols(), date_parser=date_parser)
 
-    data = extract_csv(data, args.output_file)
+    data = extract_csv(data)
 
     data.to_csv(path_or_buf=args.output_file, index=False,
                 sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,

@@ -44,7 +44,9 @@ def import_records(input_file, db_file, account_name, csv_date_format='%d.%m.%Y'
         data['status'] = constants.STATUS_NONE
         # todo: save in account table
         if 'iban' in data.columns:
-            data.drop(columns=['iban'])
+            data = data.drop(columns=['iban'])
+        if 'account' in data.columns:
+            data = data.drop(columns=['account'])
 
         data.to_sql('records', conn, if_exists='append', index=False)
 
