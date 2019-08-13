@@ -17,7 +17,7 @@ def export_records(db_file, output_file, include_unfinished=False, include_ignor
         if include_unfinished:
             params.append(constants.STATUS_NONE)
         if include_ignored:
-            params.append(constants.STATUS_IGNORED)
+            params.append(constants.STATUS_IGNORE)
         sql = ''' SELECT records.id,accounting_no,accounting_date,status,text,value_date,posting_date,billing_date,amount,currency,subject,line_id,comment,contra_name,contra_iban,contra_bic,import_preset,iban,email,creditcard_no FROM records INNER JOIN accounts ON records.account_id = accounts.id WHERE status IN (%s) ''' % ','.join('?' for i in params)
         data = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
         data.to_csv(path_or_buf=output_file, index=False,
