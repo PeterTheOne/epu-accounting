@@ -10,6 +10,7 @@ install:
 
 recommended order of running scripts:
 
+csv only workflow
 - clean
 - extract and sort
 - contra_histogram
@@ -18,12 +19,13 @@ recommended order of running scripts:
 - apply_blacklist_text
 - timesplit
 
-- clean
+db workflow
+- clean: provide the preset for non psk csv files
 - extract
 - setup_db
 - csv_to_db
-- match_records_db
+- match_records_db: provide the non psk account to match with
 - match_pdf
 - number_db
 - number_pdf
-- db_to_csv
+- db_to_csv: maybe include unfinished?
