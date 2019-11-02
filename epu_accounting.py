@@ -7,6 +7,7 @@ import extract_csv
 import contra_histogram_csv
 import text_histogram_csv
 import setup_db
+import csv_to_db
 import functions_data
 
 
@@ -144,11 +145,17 @@ def main():
 
     # setup db
     # todo: ask for database filename
+    db_name = 'db.db'
     account_names = map(lambda f: f.replace('.csv', ''), filenames)
     account_names = list(account_names)
-    setup_db.setup_db('db.db', account_names)
+    setup_db.setup_db(db_name, account_names)
 
-    # todo: csv_to_db
+    # csv_to_db
+    i = 0
+    for f in files:
+        csv_to_db.import_records(f, db_name, account_names[i])
+        i = i+1
+
     # todo: match_records_db
 
 if __name__ == '__main__':

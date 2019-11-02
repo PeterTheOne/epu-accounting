@@ -9,11 +9,7 @@ from functions_data import *
 from functions_db import *
 
 
-def import_records(input_file, db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
-    if not os.path.isfile(input_file):
-        print('Error: File "{0}" doesn\'t exist.'.format(input_file))
-        return
-
+def import_records(data, db_file, account_name):
     # find account id
     account_id = 0
     conn = create_connection(db_file)
@@ -30,10 +26,6 @@ def import_records(input_file, db_file, account_name, csv_date_format='%d.%m.%Y'
     if account_id == 0:
         print('Error: Account "{0}" doesn\'t exist.'.format(account_name))
         return
-
-    date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=get_date_cols(), date_parser=date_parser)
 
     # create a database connection
     conn = create_connection(db_file)
@@ -53,14 +45,27 @@ def import_records(input_file, db_file, account_name, csv_date_format='%d.%m.%Y'
     conn.close()
 
 
+def import_records_from_file(input_file, db_file, account_name, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+    if not os.path.isfile(input_file):
+        print('Error: File "{0}" doesn\'t exist.'.format(input_file))
+        return
+
+    date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
+    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
+                       parse_dates=get_date_cols(), date_parser=date_parser)
+
+    import_records(data, db_file, account_name)
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file')
     parser.add_argument('db_file')
     parser.add_argument('account_name')
     args = parser.parse_args()
-    import_records(args.input_file, args.db_file, args.account_name)
 
+    import_records_from_file(args.input_file, args.db_file, args.account_name)
 
 if __name__ == '__main__':
     main()
