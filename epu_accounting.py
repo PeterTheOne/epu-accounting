@@ -22,7 +22,7 @@ class CsvFolderValidator(Validator):
                 cursor_position=len(document.text))
 
 
-questions = [
+QUESTIONS = [
     {
         'type': 'input',
         'name': 'input_path',
@@ -107,7 +107,7 @@ def classify_account(data, min_count=5, min_weight=2.5):
 
 
 def main():
-    answers = prompt(questions)
+    answers = prompt(QUESTIONS)
     input_path = answers['input_path']
     files = os.listdir(input_path)
     files = filter(lambda f: f.endswith('.csv'), files)
@@ -122,10 +122,20 @@ def main():
     #print(list(files))
 
     # filter private/company
-    # todo: ask if one wants to even filter..
     # todo: ask how many lines the user wants to classify
     # todo: save and load user classifications
-    files = map(lambda f: classify_account(f), files)
+    answer = prompt([
+        {
+            'type': 'confirm',
+            'message': 'Do you want to filter by private/company?',
+            'name': 'classify',
+            'default': True,
+        }
+    ])
+
+    if answer['classify']:
+        files = map(lambda f: classify_account(f), files)
+
     files = list(files)
     print(files[0][['text', 'account']])
     print(files[0][:365]['account'].value_counts())
