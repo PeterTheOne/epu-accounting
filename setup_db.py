@@ -1,15 +1,11 @@
 import argparse
-import os.path
-import sqlite3
-from sqlite3 import Error
-from functions_db import *
+#import os.path
+#import sqlite3
+#from sqlite3 import Error
+from functions_db import create_connection, create_table, create_account
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('db_file')
-    args = parser.parse_args()
-
+def setup_db(db_file, account_names):
     sql_create_accounts_table = """ CREATE TABLE IF NOT EXISTS accounts (
                                         id integer PRIMARY KEY,
                                         parent_id integer NOT NULL,
@@ -63,7 +59,7 @@ def main():
                                     ); """
 
     # create a database connection
-    conn = create_connection(args.db_file)
+    conn = create_connection(db_file)
     if conn is not None:
         # create accounts table
         create_table(conn, sql_create_accounts_table)
@@ -75,51 +71,11 @@ def main():
         create_table(conn, sql_create_files_table)
 
         # create accounts
-        account_1 = (0, 1, '', '', '', 'Private')
-        account_1_id = create_account(conn, account_1)
-
-        account_2 = (0, 1, '', '', '', 'Work')
-        account_2_id = create_account(conn, account_2)
-
-        account_3 = (account_2_id, 0, '', '', '', 'Kreditkarte')
-        account_3_id = create_account(conn, account_3)
-
-        account_4 = (account_2_id, 0, '', '', '', 'PayPal')
-        account_4_id = create_account(conn, account_4)
-
-        # records
-        #record_1 = (account_1_id, 6, 0, 'buchungszeile 1', '2018-03-07 20:40:39.808427')
-        #record_2 = (account_1_id, 5, 0, 'buchungszeile 2', '2017-03-07 20:40:39.808427')
-        #record_3 = (account_1_id, 1, 0, 'buchungszeile 3', '2012-03-07 20:40:39.808427')
-        #record_4 = (account_1_id, 3, 0, 'kreditkarten rechnung', '2015-03-07 20:40:39.808427')
-        #record_5 = (account_1_id, 2, 0, 'buchungszeile 5', '2014-03-07 20:40:39.808427')
-        #record_6 = (account_2_id, 4, 0, 'buchung kreditkarte', '2015-03-07 20:40:39.808427')
-
-        # create records
-        #record_1_id = create_record(conn, record_1)
-        #record_2_id = create_record(conn, record_2)
-        #record_3_id = create_record(conn, record_3)
-        #record_4_id = create_record(conn, record_4)
-        #record_5_id = create_record(conn, record_5)
-        #record_6_id = create_record(conn, record_6)
- 
-        # files
-        #file_1 = (record_1_id, 'work\\files\\rechnung_18011.pdf')
-        #file_2 = (record_2_id, 'work\\files\\rechnung_18012.pdf')
-        #file_3 = (record_3_id, 'work\\files\\rechnung_18013.pdf')
-        #file_4 = (record_4_id, 'work\\files\\rechnung_18008.pdf')
-        #file_5 = (record_5_id, 'work\\files\\rechnung_18009.pdf')
-        #file_6 = (record_6_id, 'work\\files\\rechnung_18010.pdf')
-        #file_7 = (record_6_id, 'work\\files\\rechnung_18012.pdf')
- 
-        # create files
-        #create_file(conn, file_1)
-        #create_file(conn, file_2)
-        #create_file(conn, file_3)
-        #create_file(conn, file_4)
-        #create_file(conn, file_5)
-        #create_file(conn, file_6)
-        #create_file(conn, file_7)
+        # todo: set parent/child relationships
+        print('Adding accounts', account_names)
+        for name in account_names:
+            account_data = (0, 1, '', '', '', name)
+            account_id = create_account(conn, account_data)
 
         conn.commit()
     else:
@@ -127,6 +83,15 @@ def main():
 
     conn.close()
 
+def main():
+    # todo: args for accounts setup (config file or csv filenames?)
+    # todo: ask for account parent/child relationships
+    parser = argparse.ArgumentParser()
+    parser.add_argument('db_file')
+    args = parser.parse_args()
+
+    account_names = ['work', 'private']
+    setup_db(args.db_file, account_names)
 
 if __name__ == '__main__':
     main()

@@ -6,6 +6,7 @@ import clean_csv
 import extract_csv
 import contra_histogram_csv
 import text_histogram_csv
+import setup_db
 
 
 class CsvFolderValidator(Validator):
@@ -109,9 +110,9 @@ def classify_account(data, min_count=5, min_weight=2.5):
 def main():
     answers = prompt(QUESTIONS)
     input_path = answers['input_path']
-    files = os.listdir(input_path)
-    files = filter(lambda f: f.endswith('.csv'), files)
-    files = map(lambda f: input_path + os.sep + f, files)
+    filenames = os.listdir(input_path)
+    filenames = list(filter(lambda f: f.endswith('.csv'), filenames))
+    files = map(lambda f: input_path + os.sep + f, filenames)
 
     # clean
     files = map(lambda f: clean_csv.clean_from_preset(f, None, 'psk'), files)
@@ -140,8 +141,14 @@ def main():
     print(files[0][['text', 'account']])
     print(files[0][:365]['account'].value_counts())
 
-    # setup db etc.
+    # setup db
+    # todo: ask for database filename
+    account_names = map(lambda f: f.replace('.csv', ''), filenames)
+    account_names = list(account_names)
+    setup_db.setup_db('db.db', account_names)
 
+    # todo: csv_to_db
+    # todo: match_records_db
 
 if __name__ == '__main__':
     main()
