@@ -7,6 +7,7 @@ import extract_csv
 import contra_histogram_csv
 import text_histogram_csv
 import setup_db
+import functions_data
 
 
 class CsvFolderValidator(Validator):
@@ -115,7 +116,7 @@ def main():
     files = map(lambda f: input_path + os.sep + f, filenames)
 
     # clean
-    files = map(lambda f: clean_csv.clean_from_preset(f, None, 'psk'), files)
+    files = map(lambda f: clean_csv.clean_from_preset(f, None, functions_data.choose_preset(f)), files)
     #print(list(files))
 
     # extract
@@ -128,7 +129,7 @@ def main():
     answer = prompt([
         {
             'type': 'confirm',
-            'message': 'Do you want to filter by private/company?',
+            'message': 'Do you want to filter records by private/company?',
             'name': 'classify',
             'default': True,
         }
