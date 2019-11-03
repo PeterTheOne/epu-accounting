@@ -2,10 +2,53 @@ import argparse
 #import os.path
 #import sqlite3
 #from sqlite3 import Error
+from PyInquirer import prompt
 from functions_db import create_connection, create_table, create_account
 
 
+def query_account_tree(account_names):
+    # Classify main accounts
+    choices_objects = map(lambda c: {'name': c}, account_names)
+    answers = prompt([
+        {
+            'type': 'checkbox',
+            'name': 'main_accounts',
+            'message': 'Which are the main accounts/sources for accounting date?',
+            'choices': choices_objects
+        }
+    ])
+    main_accounts = answers['main_accounts']
+
+    accounts = list(map(lambda a: {'name': a, 'main_account': True, 'parent': False, 'iban': '', 'email': '', 'creditcard_no': ''}, main_accounts))
+
+    # Set parent accounts of children
+    for a in account_names:
+        if a not in main_accounts:
+            parent_account = False
+            if len(main_accounts) > 1:
+                # Multiple main accounts, ask for individual parent
+                choices_objects = map(lambda c: {'name': c}, main_accounts)
+                answers = prompt([
+                    {
+                        'type': 'list',
+                        'name': 'parent_account',
+                        'message': 'What is {}\'s the parent account?'.format(a),
+                        'choices': choices_objects
+                    }
+                ])
+                parent_account = answers['parent_account']
+            elif len(main_accounts) == 1:
+                # Only 1 main account, we are done
+                parent_account = main_accounts[0]
+
+            accounts.append({'name': a, 'main_account': False, 'parent': parent_account, 'iban': '', 'email': '', 'creditcard_no': ''})
+
+    return accounts
+
+
 def setup_db(db_file, account_names):
+    accounts = query_account_tree(account_names)
+
     sql_create_accounts_table = """ CREATE TABLE IF NOT EXISTS accounts (
                                         id integer PRIMARY KEY,
                                         parent_id integer NOT NULL,
@@ -71,11 +114,15 @@ def setup_db(db_file, account_names):
         create_table(conn, sql_create_files_table)
 
         # create accounts
-        # todo: set parent/child relationships
         print('Adding accounts', account_names)
-        for name in account_names:
-            account_data = (0, 1, '', '', '', name)
-            account_id = create_account(conn, account_data)
+        # Add main accounts first
+        for account in accounts:
+            if account['main_account']:
+                create_account(conn, account)
+        # Add child accounts linked to parents
+        for account in accounts:
+            if not account['main_account']:
+                create_account(conn, account)
 
         conn.commit()
     else:
@@ -85,7 +132,6 @@ def setup_db(db_file, account_names):
 
 def main():
     # todo: args for accounts setup (config file or csv filenames?)
-    # todo: ask for account parent/child relationships
     parser = argparse.ArgumentParser()
     parser.add_argument('db_file')
     args = parser.parse_args()

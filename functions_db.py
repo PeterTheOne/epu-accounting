@@ -38,7 +38,8 @@ def create_account(conn, account):
     :return: account id
     """
     sql = ''' INSERT INTO accounts(parent_id,main_account,iban,email,creditcard_no,name)
-              VALUES(?,?,?,?,?,?) '''
+              VALUES((SELECT IFNULL((SELECT id FROM accounts WHERE name = :parent), 0)),
+                     :main_account,:iban,:email,:creditcard_no,:name) '''
     cur = conn.cursor()
     cur.execute(sql, account)
     return cur.lastrowid
