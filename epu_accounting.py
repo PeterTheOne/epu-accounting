@@ -123,6 +123,8 @@ def main():
     #print(list(files))
 
     # extract
+    # todo: better condition to only extract PSK statements
+    #files = map(lambda f: extract_csv.extract_csv(f) if 'psk' in f else f, files)
     files = map(lambda f: extract_csv.extract_csv(f), files)
     #print(list(files))
 

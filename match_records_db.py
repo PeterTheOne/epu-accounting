@@ -144,6 +144,7 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
                 log_updated += cur.rowcount
 
                 # update main record
+                # todo: set accouting_date
                 # todo: when to mark credit card billing record as done?
                 params = [
                     constants.STATUS_IGNORE,
