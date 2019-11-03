@@ -144,8 +144,16 @@ def main():
     print(files[0][:365]['account'].value_counts())
 
     # setup db
-    # todo: ask for database filename
-    db_name = 'db.db'
+    # ask for database filename
+    answer = prompt([
+        {
+            'type': 'input',
+            'name': 'db_name',
+            'message': 'Filename to write database to:',
+            'default': 'db.db',
+        }
+    ])
+    db_name = answer['db_name']
     account_names = map(lambda f: f.replace('.csv', ''), filenames)
     account_names = list(account_names)
     setup_db.setup_db(db_name, account_names)
