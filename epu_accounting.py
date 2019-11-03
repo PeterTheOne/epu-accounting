@@ -8,7 +8,9 @@ import contra_histogram_csv
 import text_histogram_csv
 import setup_db
 import csv_to_db
+import match_records_db
 import functions_data
+import functions_db
 
 
 class CsvFolderValidator(Validator):
@@ -140,31 +142,41 @@ def main():
         files = map(lambda f: classify_account(f), files)
 
     files = list(files)
-    print(files[0][['text', 'account']])
-    print(files[0][:365]['account'].value_counts())
+    #print(files[0][['text', 'account']])
+    #print(files[0][:365]['account'].value_counts())
 
     # setup db
     # ask for database filename
     answer = prompt([
         {
             'type': 'input',
-            'name': 'db_name',
+            'name': 'db_file',
             'message': 'Filename to write database to:',
             'default': 'db.db',
         }
     ])
-    db_name = answer['db_name']
+    db_file = answer['db_file']
     account_names = map(lambda f: f.replace('.csv', ''), filenames)
     account_names = list(account_names)
-    setup_db.setup_db(db_name, account_names)
+    setup_db.setup_db(db_file, account_names)
 
     # csv_to_db
     i = 0
     for f in files:
-        csv_to_db.import_records(f, db_name, account_names[i])
+        csv_to_db.import_records(f, db_file, account_names[i])
         i = i+1
 
-    # todo: match_records_db
+    # query secondary account names
+    conn = functions_db.create_connection(db_file)
+    with conn:
+        secondary_accounts = functions_db.get_secondary_accounts(conn)
+    conn.close()
+
+    # match_records_db
+    for a in secondary_accounts:
+        account_name = a[0]
+        print('Matching records from account {} with main account'.format(account_name))
+        match_records_db.match_records(db_file, account_name, False)
 
 if __name__ == '__main__':
     main()

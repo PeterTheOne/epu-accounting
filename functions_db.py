@@ -75,6 +75,12 @@ def create_file(conn, file):
     return cur.lastrowid
 
 
+def get_secondary_accounts(conn):
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM accounts WHERE main_account = ?", (False,))
+    return cur.fetchall()
+
+
 # generator to flatten values of irregular nested sequences,
 # modified from answers http://stackoverflow.com/questions/952914/making-a-flat-list-out-of-list-of-lists-in-python
 def flatten(l):
