@@ -173,6 +173,7 @@ def main():
     conn.close()
 
     # match_records_db
+    # todo: fix error if there is no main account
     for a in secondary_accounts:
         account_name = a[0]
         print('Matching records from account {} with main account'.format(account_name))

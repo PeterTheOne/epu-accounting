@@ -11,7 +11,7 @@ from functions_db import *
 from functions_match import *
 
 
-def match_records(db_file, account_name, include_all=False, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def match_records(db_file, account_name, include_all=False, automatic=False, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     # create a database connection
     conn = create_connection(db_file)
     with conn:
@@ -95,19 +95,48 @@ def match_records(db_file, account_name, include_all=False, csv_date_format='%d.
                 amount_weights.rename('amount_w')
             ], axis=1, sort=False)
             result = result.sort_values(by=['w'], ascending=False) # sort by closest matches
-            result = result.iloc[:1]
 
-            # is the match good enough?
-            if any(result.w > 0.75):
+            chosen_result = None
+            if not automatic:
+                # Present choices
+                choices_objects = []
+                for parent_id, parent_row in result.iterrows():
+                    name = '{0} - {1} - {2} - {3}'.format(parent_row['w'], parent_row[date_target_field], parent_row[amount_target_field], parent_row['text'])
+                    choices_objects.append({'value': parent_row.at['id'], 'name': name})
+                choices_objects.append({'value': 'none', 'name': 'None of the above'})
+                record_description = '{0} - {1} - {2}'.format(row[date_target_field], row[amount_target_field], row['text'])
+                answers = prompt([
+                    {
+                        'type': 'list',
+                        'name': 'parent_record',
+                        'message': 'Select parent record for {}'.format(record_description),
+                        'choices': choices_objects
+                    }
+                ])
+                parent_record = answers['parent_record']
+
+                # Skip if nothing was selected
+                if parent_record != 'none':
+                    chosen_result = result.loc[result['id'] == parent_record]
+
+            else:
+                # Choose match with highest score
+                chosen_result = result.iloc[:1]
+                # is the match good enough?
+                chosen_result = chosen_result.loc[result['w'] > 0.75]
+
+
+            if chosen_result is not None:
+                chosen_result = chosen_result.iloc[0]
                 log_matches += 1
 
-                #print(result[['text', date_target_field, amount_target_field, 'w', 'date_w', 'amount_w']])
+                #print(chosen_result[['text', date_target_field, amount_target_field, 'w', 'date_w', 'amount_w']])
 
                 # update orphan record
                 sql_date_format = '%Y-%m-%d %H:%M:%S'
                 params = [
-                    int(result.iloc[0].at['id']),
-                    result.iloc[0].at[date_target_field].strftime(sql_date_format), # use date from result
+                    int(chosen_result.at['id']),
+                    chosen_result.at[date_target_field].strftime(sql_date_format), # use date from result
                     constants.STATUS_DONE,
                     row.id
                 ]
@@ -118,7 +147,7 @@ def match_records(db_file, account_name, include_all=False, csv_date_format='%d.
                 # todo: when to mark credit card billing record as done?
                 params = [
                     constants.STATUS_IGNORE,
-                    int(result.iloc[0].at['id'])
+                    int(chosen_result.at['id'])
                 ]
                 cur.execute("UPDATE records SET status = ? WHERE id = ?", params)
                 log_updated += cur.rowcount
@@ -138,9 +167,10 @@ def main():
     parser.add_argument('account_name')
     parser.add_argument('--include_all', dest='include_all', action='store_true')
     parser.add_argument('--exclude_unfinished', dest='include_all', action='store_false')
-    parser.set_defaults(include_all=False)
+    parser.add_argument('--automatic', dest='automatic', action='store_true')
+    parser.set_defaults(include_all=False, automatic=False)
     args = parser.parse_args()
-    match_records(args.db_file, args.account_name, args.include_all)
+    match_records(args.db_file, args.account_name, args.include_all, args.automatic)
 
 
 if __name__ == '__main__':
