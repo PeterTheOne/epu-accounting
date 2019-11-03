@@ -7,17 +7,20 @@ from functions_db import create_connection, create_table, create_account
 
 
 def query_account_tree(account_names):
-    # Classify main accounts
-    choices_objects = map(lambda c: {'name': c}, account_names)
-    answers = prompt([
-        {
-            'type': 'checkbox',
-            'name': 'main_accounts',
-            'message': 'Which are the main accounts/sources for accounting date?',
-            'choices': choices_objects
-        }
-    ])
-    main_accounts = answers['main_accounts']
+    if len(account_names) > 1:
+        # Classify main accounts
+        choices_objects = map(lambda c: {'name': c}, account_names)
+        answers = prompt([
+            {
+                'type': 'checkbox',
+                'name': 'main_accounts',
+                'message': 'Which are the main accounts/sources for accounting date?',
+                'choices': choices_objects
+            }
+        ])
+        main_accounts = answers['main_accounts']
+    else:
+        main_accounts = account_names
 
     accounts = list(map(lambda a: {'name': a, 'main_account': True, 'parent': False, 'iban': '', 'email': '', 'creditcard_no': ''}, main_accounts))
 
@@ -131,13 +134,21 @@ def setup_db(db_file, account_names):
     conn.close()
 
 def main():
-    # todo: args for accounts setup (config file or csv filenames?)
     parser = argparse.ArgumentParser()
     parser.add_argument('db_file')
+    parser.add_argument('account_names', help='Comma seperated list of account names')
     args = parser.parse_args()
 
-    account_names = ['work', 'private']
-    setup_db(args.db_file, account_names)
+    # Clean up account names
+    account_names = args.account_names.split(',')
+    account_names = map(lambda a: a.strip(), account_names)
+    account_names = filter(lambda a: a != '', account_names)
+    account_names = list(account_names)
+
+    if len(account_names) > 0:
+        setup_db(args.db_file, account_names)
+    else:
+        print('No account names provided, database not created.')
 
 if __name__ == '__main__':
     main()
