@@ -11,6 +11,19 @@ from functions_db import *
 from functions_match import *
 
 
+def get_record_subject(row):
+    record_subject = ''
+
+    if row['subject'] != None:
+        record_subject = row['subject']
+    elif row['comment'] != None:
+        record_subject = row['comment']
+    else:
+        record_subject = row['text']
+
+    return record_subject
+
+
 def match_records(db_file, account_name, include_all=False, automatic=False, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     # create a database connection
     conn = create_connection(db_file)
@@ -45,6 +58,8 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
         log_matches = 0
         log_orphans = len(orphans.index)
         log_updated = 0
+
+        choices_exclude = []
 
         for index, row in orphans.iterrows():
             # get presets
@@ -101,10 +116,15 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
                 # Present choices
                 choices_objects = []
                 for parent_id, parent_row in result.iterrows():
-                    name = '{0} - {1} - {2} - {3}'.format(parent_row['w'], parent_row[date_target_field], parent_row[amount_target_field], parent_row['text'])
+                    if parent_row['id'] in choices_exclude:
+                        # mark as already chosen
+                        record_format = '({0:.2f}: {1} at {2} from/to {3}, subject: {4})'
+                    else:
+                        record_format = '{0:.2f}: {1} at {2} from/to {3}, subject: {4}'
+                    name = record_format.format(parent_row['w'], parent_row[amount_target_field], parent_row[date_target_field], parent_row['contra_name'], get_record_subject(parent_row))
                     choices_objects.append({'value': parent_row.at['id'], 'name': name})
                 choices_objects.append({'value': 'none', 'name': 'None of the above'})
-                record_description = '{0} - {1} - {2}'.format(row[date_target_field], row[amount_target_field], row['text'])
+                record_description = '{0} at {1} from/to {2}, subject: {3}'.format(row[amount_source_field], row[date_source_field], row['contra_name'], get_record_subject(row))
                 answers = prompt([
                     {
                         'type': 'list',
@@ -118,6 +138,7 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
                 # Skip if nothing was selected
                 if parent_record != 'none':
                     chosen_result = result.loc[result['id'] == parent_record]
+                    choices_exclude.append(parent_record)
 
             else:
                 # Choose match with highest score
