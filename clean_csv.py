@@ -59,7 +59,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file')
     parser.add_argument('output_file')
-    parser.add_argument('--preset', default='psk')
+    parser.add_argument('preset')
     args = parser.parse_args()
     if not os.path.isfile(args.input_file):
         print('Error: File "{0}" don\'t exist.'.format(args.input_file))
