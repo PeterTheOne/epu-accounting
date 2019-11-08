@@ -46,8 +46,8 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
         params = []
         sql = ''' SELECT * FROM records '''
         if not include_all:
-            sql = sql + '''WHERE status = ? '''
-            params = [constants.STATUS_NONE]
+            sql = sql + '''WHERE status != ? '''
+            params = [constants.STATUS_IGNORE]
         sql = sql + '''ORDER BY posting_date DESC '''
         data = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
 
