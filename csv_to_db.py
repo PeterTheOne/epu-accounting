@@ -5,16 +5,18 @@ import sqlite3
 from sqlite3 import Error
 
 import constants
+import presets_matching
 from functions_data import *
 from functions_db import *
 
 
 def import_records(data, db_file, account_name):
-    # find account id
+    # find account
     account_id = 0
+    account_main = False
     conn = create_connection(db_file)
     with conn:
-        sql = ''' SELECT id FROM accounts WHERE name = ? LIMIT 1 '''
+        sql = ''' SELECT id,main_account FROM accounts WHERE name = ? LIMIT 1 '''
         cur = conn.cursor()
         cur.execute(sql, (account_name,))
 
@@ -22,10 +24,21 @@ def import_records(data, db_file, account_name):
 
         for row in rows:
             account_id = row[0]
+            account_main = row[1] == 1
 
     if account_id == 0:
         print('Error: Account "{0}" doesn\'t exist.'.format(account_name))
         return
+
+    # get preset
+    preset_key = data.iloc[0].at['import_preset']
+    if preset_key not in presets_matching.PRESETS_MATCHING:
+        print('Preset {} not found'.format(preset_key))
+        return
+
+    preset = presets_matching.PRESETS_MATCHING[preset_key]
+
+    date_field = preset.get('match_fields', {}).get('date', 'posting_date')
 
     # create a database connection
     conn = create_connection(db_file)
@@ -33,7 +46,9 @@ def import_records(data, db_file, account_name):
         data['account_id'] = account_id
         # set defaults
         data['accounting_no'] = 0
-        data['status'] = constants.STATUS_NONE
+        data['status'] = constants.STATUS_DONE if account_main else constants.STATUS_NONE
+        if account_main:
+            data['accounting_date'] = data[date_field]
         # todo: save in account table
         if 'iban' in data.columns:
             data = data.drop(columns=['iban'])
