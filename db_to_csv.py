@@ -20,6 +20,7 @@ def export_records(db_file, output_file, include_unfinished=False, include_ignor
             params.append(constants.STATUS_IGNORE)
         sql = ''' SELECT records.id,accounting_no,accounting_date,status,text,value_date,posting_date,billing_date,amount,currency,subject,line_id,comment,contra_name,contra_iban,contra_bic,import_preset,iban,email,creditcard_no FROM records INNER JOIN accounts ON records.account_id = accounts.id WHERE status IN (%s) ''' % ','.join('?' for i in params)
         data = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
+        data = data.sort_values(by=['accounting_no'], ascending=True)
         data.to_csv(path_or_buf=output_file, index=False,
                 sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
                 date_format=csv_date_format)
