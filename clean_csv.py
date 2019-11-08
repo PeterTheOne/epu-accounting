@@ -27,7 +27,6 @@ def extract_psk(data):
 
 def extract_paypal(data):
     # Filter redundant rows
-    data.insert(0, 'status', 0)
     data.loc[data['Typ'] == 'Bankgutschrift auf PayPal-Konto', 'status'] = constants.STATUS_IGNORE
     data.loc[data['Währung'] != 'EUR', 'status'] = constants.STATUS_IGNORE
 
@@ -51,6 +50,10 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
                        decimal=decimal, thousands=thousands,
                        names=col_names, usecols=usecols,
                        parse_dates=date_cols, date_parser=date_parser)
+
+    # Set default values for new columns
+    data.insert(0, 'status', 0)
+    data.insert(0, 'accounting_no', 0)
 
     if preset_key == 'paypal':
         data = extract_paypal(data)

@@ -69,7 +69,7 @@ def setup_db(db_file, account_names):
                                         parent_id integer DEFAULT 0,
                                         account_id integer NOT NULL,    /* foreign key */
                                         /* accounting */
-                                        accounting_no integer,
+                                        accounting_no integer DEFAULT 0,
                                         accounting_date timestamp,      /* date to be used in accounting */
                                         status integer DEFAULT 0,
                                         /* data source; read only */

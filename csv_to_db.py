@@ -44,11 +44,11 @@ def import_records(data, db_file, account_name):
     conn = create_connection(db_file)
     with conn:
         data['account_id'] = account_id
-        # set defaults
-        data['accounting_no'] = 0
-        data['status'] = constants.STATUS_DONE if account_main else constants.STATUS_NONE
+        # set defaults for main accounts
+        # note: other defaults are set during DB setup and clean
         if account_main:
             data['accounting_date'] = data[date_field]
+            data['status'] = constants.STATUS_DONE
         # todo: save in account table
         if 'iban' in data.columns:
             data = data.drop(columns=['iban'])
