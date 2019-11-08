@@ -35,7 +35,7 @@ def convert_strings_to_dates(value, format):
         return False
 
 
-def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def read_pdf(data, invoice_file):
     if not os.path.isfile(invoice_file):
         print('Error: File "{0}" doesn\'t exist.'.format(invoice_file))
         return
@@ -139,13 +139,12 @@ def read_pdf(data, invoice_file, csv_date_format='%d.%m.%Y', csv_delimiter=',', 
     ], axis=1, sort=False)
     result = result.sort_values(by=['w'], ascending=False) # sort by closest matches
     result = result.iloc[:10] # keep only top 10
-    print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
+    #print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
 
-    match = result.iloc[:1]
-    return match
+    return result
 
 
-def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def batch_read_pdf(db_file, input_path='.', automatic=False):
     if not os.path.exists(input_path):
         print('Error: No such directory "{0}".'.format(input_path))
         return
@@ -164,19 +163,55 @@ def batch_read_pdf(db_file, input_path='.', csv_date_format='%d.%m.%Y', csv_deli
         log_files = 1
         log_matches = 0
         log_inserted = 0
+        choices_exclude = []
+
         for path in pathlist:
             # because path is object not string
             path_in_str = str(path)
             print('Processing ' + path_in_str)
-            match = read_pdf(data, path_in_str)
+            matches = read_pdf(data, path_in_str)
 
-            # is the match good enough?
-            if any(match.w > 0.3):
+            chosen_result = None
+            if not automatic:
+                # Present choices
+                choices_objects = []
+                for index, match in matches.iterrows():
+                    if match['id'] in choices_exclude:
+                        # mark as already chosen
+                        record_format = '({0:.2f}: {1} at {2} from/to {3}, subject: )'
+                    else:
+                        record_format = '{0:.2f}: {1} at {2} from/to {3}, subject: '
+                    name = record_format.format(match['w'], match['amount'], match['posting_date'], match['contra_name'])#, get_record_subject(match))
+                    choices_objects.append({'value': match.at['id'], 'name': name})
+                choices_objects.append({'value': 'none', 'name': 'None of the above'})
+                answers = prompt([
+                    {
+                        'type': 'list',
+                        'name': 'selected_record',
+                        'message': 'Select record for PDF',
+                        'choices': choices_objects
+                    }
+                ])
+                selected_record = answers['selected_record']
+
+                # Skip if nothing was selected
+                if selected_record != 'none':
+                    chosen_result = matches.loc[matches['id'] == selected_record]
+                    choices_exclude.append(selected_record)
+
+            else:
+                # Choose match with highest score
+                chosen_result = matches.iloc[:1]
+                # is the match good enough?
+                chosen_result = chosen_result.loc[matches['w'] > 0.3]
+
+            if chosen_result is not None and not chosen_result.empty:
+                chosen_result = chosen_result.iloc[0]
                 log_matches += 1
 
                 # insert file
                 params = [
-                    int(match.iloc[0].at['id']),
+                    int(chosen_result.at['id']),
                     path_in_str
                 ]
 
@@ -193,8 +228,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('db_file')
     parser.add_argument('input_path')
+    parser.add_argument('--automatic', dest='automatic', action='store_true')
     args = parser.parse_args()
-    batch_read_pdf(args.db_file, args.input_path)
+    batch_read_pdf(args.db_file, args.input_path, args.automatic)
 
 
 if __name__ == '__main__':
