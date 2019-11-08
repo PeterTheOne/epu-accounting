@@ -3,7 +3,6 @@ import re
 from PyInquirer import prompt
 from PyInquirer import Validator, ValidationError
 import clean_csv
-import extract_csv
 import contra_histogram_csv
 import text_histogram_csv
 import setup_db
@@ -120,12 +119,6 @@ def main():
 
     # clean
     files = map(lambda f: clean_csv.clean_from_preset(f, None, functions_data.choose_preset(f)), files)
-    #print(list(files))
-
-    # extract
-    # todo: better condition to only extract PSK statements
-    #files = map(lambda f: extract_csv.extract_csv(f) if 'psk' in f else f, files)
-    files = map(lambda f: extract_csv.extract_csv(f), files)
     #print(list(files))
 
     # filter private/company

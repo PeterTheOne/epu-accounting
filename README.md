@@ -12,7 +12,7 @@ recommended order of running scripts:
 
 csv only workflow
 - clean
-- extract and sort
+- sort
 - contra_histogram
 - apply_blacklist
 - text_histogram
@@ -20,11 +20,10 @@ csv only workflow
 - timesplit
 
 db workflow
-- clean: provide the preset for non psk csv files
-- extract
+- clean
 - setup_db
 - csv_to_db
-- match_records_db: provide the non psk account to match with
+- match_records_db: provide the account to match to main account
 - match_pdf
 - number_db
 - number_pdf
