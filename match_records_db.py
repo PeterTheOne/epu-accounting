@@ -34,12 +34,13 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
         cur = conn.cursor()
         cur.execute("SELECT id,parent_id FROM accounts WHERE name = ?", (account_name,))
         sec_account = cur.fetchone()
-        sec_account_id = sec_account[0]
-        parent_account_id = sec_account[1]
 
-        if sec_account_id == 0:
+        if sec_account == None:
             print('Error: Account "{0}" doesn\'t exist.'.format(account_name))
             return
+
+        sec_account_id = sec_account[0]
+        parent_account_id = sec_account[1]
 
         # get all records
         params = []
