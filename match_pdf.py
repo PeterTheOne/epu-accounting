@@ -1,25 +1,13 @@
 import argparse
+
 import os.path
 from pathlib import Path
-import pandas as pd
-import sqlite3
-from sqlite3 import Error
-
 import ntpath
-
-import PyPDF2 
-#import textract
 
 import re
 from collections import Counter
 
-import datetime
 import locale
-
-import unicodedata
-
-#from nltk.tokenize import word_tokenize
-#from nltk.corpus import stopwords
 
 import threading
 import queue as Queue
@@ -28,13 +16,16 @@ import tkinter as tk
 from tkinter import ttk
 from PyInquirer import prompt
 
+import pandas as pd
+
 from PIL import ImageTk
 from pdf2image import convert_from_path
 
 import constants
-from functions_data import *
-from functions_db import *
-from functions_match import *
+from functions_data import get_date_cols
+from functions_db import create_connection
+from functions_match import match_date, match_keywords, match_exact, match_amount
+from functions_pdf import extract_text_pdf
 
 # constants
 SINGLE_FILE = True
@@ -142,30 +133,7 @@ def read_pdf(data, invoice_file):
         print('Error: File "{0}" doesn\'t exist.'.format(invoice_file))
         return
 
-    #open allows you to read the file
-    pdfFileObj = open(invoice_file,'rb')
-    #The pdfReader variable is a readable object that will be parsed
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-    #discerning the number of pages will allow us to parse through all #the pages
-    num_pages = pdfReader.numPages
-    count = 0
-    text = ""
-    #The while loop will read each page
-    while count < num_pages:
-        pageObj = pdfReader.getPage(count)
-        count +=1
-        text += pageObj.extractText()
-    #This if statement exists to check if the above library returned #words. It's done because PyPDF2 cannot read scanned files.
-    if text != "":
-       text = text
-    #If the above returns as False, we run the OCR library textract to #convert scanned/image based PDF files into text
-    #else:
-       #text = textract.process(fileurl, method='tesseract', language='eng')
-    # Now we have a text variable which contains all the text derived #from our PDF file. Type print(text) to see what it contains. It #likely contains a lot of spaces, possibly junk such as '\n' etc.
-    # Now, we will clean our text variable, and return it as a list of keywords.
-
-    #with open('work/output.txt', 'w') as out:
-        #out.write(text)
+    text = extract_text_pdf(invoice_file)
 
     # extract important info
     filename_keywords = os.path.splitext(ntpath.basename(invoice_file))[0]
