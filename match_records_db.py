@@ -35,7 +35,7 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
         if not include_all:
             sql = sql + '''WHERE status != ? '''
             params = [constants.STATUS_IGNORE]
-        sql = sql + '''ORDER BY posting_date DESC '''
+        sql = sql + '''ORDER BY value_date DESC '''
         data = pd.read_sql(sql, conn, params=params, parse_dates=get_date_cols())
 
         main = data[data.account_id == parent_account_id]
@@ -66,8 +66,8 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
             # weight fields
             amount_source_field = source_preset.get('match_fields', {}).get('amount', 'amount')
             amount_target_field = target_preset.get('match_fields', {}).get('amount', 'amount')
-            date_source_field = source_preset.get('match_fields', {}).get('date', 'posting_date')
-            date_target_field = target_preset.get('match_fields', {}).get('date', 'posting_date')
+            date_source_field = source_preset.get('match_fields', {}).get('date', 'value_date')
+            date_target_field = target_preset.get('match_fields', {}).get('date', 'value_date')
 
             # weight factors
             amount_w_factor = source_preset.get('match_weights', {}).get('amount', 0)

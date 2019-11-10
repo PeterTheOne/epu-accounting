@@ -16,7 +16,7 @@ def calc_weight(date):
 
 
 def contra_histogram(data):
-    data['weight'] = data['posting_date'].apply(calc_weight)
+    data['weight'] = data['value_date'].apply(calc_weight)
     data['count'] = 1
     hist = data[['contra_iban', 'count', 'weight']].groupby(['contra_iban']).sum().sort_values(['weight', 'contra_iban'], ascending=[False, True])
     hist = pd.merge(hist, data[['contra_iban', 'contra_name']], how='inner', on=['contra_iban']).drop_duplicates(subset='contra_iban')

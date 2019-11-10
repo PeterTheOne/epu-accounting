@@ -186,7 +186,7 @@ def read_pdf(data, invoice_file):
     iban_weights = match_exact(data['contra_iban'], ibans)
     numbers_weights = match_keywords(data['comment'], invoice_no)
     amount_weights = match_amount(data['amount'], amount, absolute=True)
-    date_weights = match_date(data['posting_date'], date)
+    date_weights = match_date(data['value_date'], date)
     emails_weights = match_keywords(data['contra_name'], emails)
 
     weights = (filename_weights*0.25 + iban_weights*0.1 + numbers_weights*0.2 + date_weights*0.1 + amount_weights*0.15 + emails_weights*0.2)
@@ -209,7 +209,7 @@ def read_pdf(data, invoice_file):
     ], axis=1, sort=False)
     result = result.sort_values(by=['w'], ascending=False) # sort by closest matches
     result = result.iloc[:10] # keep only top 10
-    #print(result[['line_id', 'posting_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
+    #print(result[['line_id', 'value_date', 'amount', 'w', 'filename_w', 'iban_w', 'numbers_w', 'date_w', 'amount_w', 'emails_w']])
 
     return result
 
@@ -254,7 +254,7 @@ def batch_read_pdf(db_file, input_path='.', automatic=False):
                         record_format = '({:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28})'
                     else:
                         record_format = ' {:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28} '
-                    name = record_format.format(match['w'], match['amount'], str(match['posting_date']), str(match['contra_name']), get_record_subject(match))
+                    name = record_format.format(match['w'], match['amount'], str(match['value_date']), str(match['contra_name']), get_record_subject(match))
                     choices_objects.append({'value': match.at['id'], 'name': name})
                 choices_objects.append({'value': 'none', 'name': 'None of the above'})
                 answers = prompt([

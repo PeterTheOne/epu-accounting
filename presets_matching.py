@@ -1,7 +1,7 @@
 PRESETS_MATCHING = {
     'psk': {
         'match_fields': {
-            'date':   'posting_date',
+            'date':   'value_date',
             'amount': 'amount'
         }#,
         #'match_weights': {

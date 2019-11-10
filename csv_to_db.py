@@ -38,7 +38,7 @@ def import_records(data, db_file, account_name):
 
     preset = presets_matching.PRESETS_MATCHING[preset_key]
 
-    date_field = preset.get('match_fields', {}).get('date', 'posting_date')
+    date_field = preset.get('match_fields', {}).get('date', 'value_date')
 
     # create a database connection
     conn = create_connection(db_file)
