@@ -6,6 +6,7 @@ requirements:
 - python 3
 
 install:
+- poppler, see [pdf2image Installation](https://github.com/Belval/pdf2image#how-to-install)
 - `pip install -r requirements.txt`
 
 recommended order of running scripts:

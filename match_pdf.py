@@ -21,11 +21,29 @@ import unicodedata
 #from nltk.tokenize import word_tokenize
 #from nltk.corpus import stopwords
 
+import threading
+import queue as Queue
+
+import tkinter as tk
+from tkinter import ttk
+from PyInquirer import prompt
+
+from PIL import ImageTk
+from pdf2image import convert_from_path
+
 import constants
 from functions_data import *
 from functions_db import *
 from functions_match import *
 
+# constants
+SINGLE_FILE = True
+SIZE = (500, None)
+USE_CROPBOX = True
+
+# globals
+global_image = ''
+global_old_image = ''
 
 def convert_strings_to_dates(value, format):
     locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
@@ -33,6 +51,90 @@ def convert_strings_to_dates(value, format):
         return pd.datetime.strptime(value, format)
     except ValueError:
         return False
+
+
+class PdfGui:
+    def __init__(self, master):
+        self.master = master
+
+        self.width, self.height = 700, 700
+        master.minsize(width=self.width, height=self.height)
+        master.maxsize(width=self.width, height=self.height)
+        self.image = ''
+
+        self.make_widgets()
+
+    def make_widgets(self):
+        frame_outer = ttk.Frame(self.master)
+        canvas = tk.Canvas(frame_outer, width=self.width-20, height=self.height-50)
+        frame_inner = ttk.Frame(canvas)
+        scrollx = ttk.Scrollbar(frame_outer, orient='horizontal', command=canvas.xview)
+        scrolly = ttk.Scrollbar(frame_outer, orient='vertical', command=canvas.yview)
+        canvas.configure(xscrollcommand=scrollx.set, yscrollcommand=scrolly.set)
+
+        frame_outer.grid()
+        canvas.grid(row=1, sticky='nesw')
+        scrollx.grid(row=2, sticky='ew')
+        scrolly.grid(row=1, column=2, sticky='ns')
+        canvas.create_window(0, 0, window=frame_inner, anchor='nw')
+
+        self.label = ttk.Label(frame_inner)
+        self.label.grid(sticky='w')
+
+        self.prog_bar = ttk.Progressbar(
+            self.master, orient="horizontal",
+            length=self.width, mode="indeterminate"
+            )
+        self.prog_bar.grid(sticky='w')
+
+    def update_gui(self):
+        global global_image, global_old_image
+
+        if global_image != global_old_image:
+            self.set_image()
+            global_old_image = global_image
+
+    def set_image(self):
+        global global_image
+
+        self.prog_bar.start()
+
+        # Load image
+        pil_images = convert_from_path(global_image, single_file=SINGLE_FILE,
+                                       size=SIZE, use_cropbox=USE_CROPBOX)
+        first_page = pil_images[0]
+        self.image = ImageTk.PhotoImage(first_page)
+        self.label.configure(image=self.image)
+
+        self.prog_bar.stop()
+
+    def start_threading(self, db_file, input_path='.', automatic=False):
+        self.queue = Queue.Queue()
+        ThreadedTask(self.queue, db_file, input_path, automatic).start()
+        self.master.after(100, self.process_queue)
+
+    def process_queue(self):
+        self.update_gui()
+
+        try:
+            msg = self.queue.get(0)
+            #print(msg) # Show result of the task if needed
+            self.master.destroy() # Close GUI
+        except Queue.Empty:
+            self.master.after(100, self.process_queue)
+
+
+class ThreadedTask(threading.Thread):
+    def __init__(self, queue, db_file, input_path='.', automatic=False):
+        threading.Thread.__init__(self)
+        self.queue = queue
+        self.db_file = db_file
+        self.input_path = input_path
+        self.automatic = automatic
+    def run(self):
+        # Some long running process
+        batch_read_pdf(self.db_file, self.input_path, self.automatic)
+        self.queue.put("Task finished")
 
 
 def read_pdf(data, invoice_file):
@@ -145,6 +247,8 @@ def read_pdf(data, invoice_file):
 
 
 def batch_read_pdf(db_file, input_path='.', automatic=False):
+    global global_image
+
     if not os.path.exists(input_path):
         print('Error: No such directory "{0}".'.format(input_path))
         return
@@ -170,6 +274,7 @@ def batch_read_pdf(db_file, input_path='.', automatic=False):
             path_in_str = str(path)
             print('Processing ' + path_in_str)
             matches = read_pdf(data, path_in_str)
+            global_image = path_in_str
 
             chosen_result = None
             if not automatic:
@@ -229,8 +334,17 @@ def main():
     parser.add_argument('db_file')
     parser.add_argument('input_path')
     parser.add_argument('--automatic', dest='automatic', action='store_true')
+    parser.add_argument('--gui', dest='gui', action='store_true')
     args = parser.parse_args()
-    batch_read_pdf(args.db_file, args.input_path, args.automatic)
+
+    if not args.automatic and args.gui:
+        root = tk.Tk()
+        root.title("epu-accounting - PDF Viewer")
+        main_ui = PdfGui(root)
+        main_ui.start_threading(args.db_file, args.input_path, args.automatic)
+        root.mainloop()
+    else:
+        batch_read_pdf(args.db_file, args.input_path, args.automatic)
 
 
 if __name__ == '__main__':
