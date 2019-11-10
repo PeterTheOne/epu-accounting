@@ -17,3 +17,15 @@ def choose_preset(filename):
     ])
 
     return answers['preset']
+
+def get_record_subject(row):
+    record_subject = ''
+
+    if row['subject'] != None:
+        record_subject = row['subject']
+    elif row['comment'] != None:
+        record_subject = row['comment']
+    else:
+        record_subject = row['text']
+
+    return str(record_subject)

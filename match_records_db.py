@@ -11,19 +11,6 @@ from functions_db import *
 from functions_match import *
 
 
-def get_record_subject(row):
-    record_subject = ''
-
-    if row['subject'] != None:
-        record_subject = row['subject']
-    elif row['comment'] != None:
-        record_subject = row['comment']
-    else:
-        record_subject = row['text']
-
-    return record_subject
-
-
 def match_records(db_file, account_name, include_all=False, automatic=False, csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     # create a database connection
     conn = create_connection(db_file)
@@ -119,13 +106,13 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
                 for parent_id, parent_row in result.iterrows():
                     if parent_row['id'] in choices_exclude:
                         # mark as already chosen
-                        record_format = '({0:.2f}: {1} at {2} from/to {3}, subject: {4})'
+                        record_format = '({:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28})'
                     else:
-                        record_format = '{0:.2f}: {1} at {2} from/to {3}, subject: {4}'
-                    name = record_format.format(parent_row['w'], parent_row[amount_target_field], parent_row[date_target_field], parent_row['contra_name'], get_record_subject(parent_row))
+                        record_format = ' {:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28} '
+                    name = record_format.format(parent_row['w'], parent_row[amount_target_field], str(parent_row[date_target_field]), str(parent_row['contra_name']), get_record_subject(parent_row))
                     choices_objects.append({'value': parent_row.at['id'], 'name': name})
                 choices_objects.append({'value': 'none', 'name': 'None of the above'})
-                record_description = '{0} at {1} from/to {2}, subject: {3}'.format(row[amount_source_field], row[date_source_field], row['contra_name'], get_record_subject(row))
+                record_description = '{:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row[amount_source_field], str(row[date_source_field]), str(row['contra_name']), get_record_subject(row))
                 answers = prompt([
                     {
                         'type': 'list',
