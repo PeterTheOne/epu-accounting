@@ -148,7 +148,7 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
                 chosen_result = chosen_result.loc[result['w'] > 0.75]
 
 
-            if chosen_result is not None:
+            if chosen_result is not None and not chosen_result.empty:
                 chosen_result = chosen_result.iloc[0]
                 log_matches += 1
 
