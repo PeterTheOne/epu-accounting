@@ -8,7 +8,14 @@ import constants
 from functions_db import *
 
 
-def number_records(db_file, year):
+def check_positive(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+
+def number_records(db_file, year, start_no):
     # create a database connection
     conn = create_connection(db_file)
     with conn:
@@ -19,8 +26,8 @@ def number_records(db_file, year):
         rows = cur.fetchall()
         log_records = len(rows)
 
-        running_no = 1
         log_updated = 0
+        running_no = int(start_no)
 
         for row in rows:
             id = row[0]
@@ -42,8 +49,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('db_file')
     parser.add_argument('year')
+    parser.add_argument('--start', dest='start_no', default=1, type=check_positive)
     args = parser.parse_args()
-    number_records(args.db_file, args.year)
+    number_records(args.db_file, args.year, args.start_no)
 
 
 if __name__ == '__main__':
