@@ -75,6 +75,12 @@ def create_file(conn, file):
     return cur.lastrowid
 
 
+def get_primary_accounts(conn):
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM accounts WHERE main_account = ?", (True,))
+    return cur.fetchall()
+
+
 def get_secondary_accounts(conn):
     cur = conn.cursor()
     cur.execute("SELECT name FROM accounts WHERE main_account = ?", (False,))

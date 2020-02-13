@@ -161,18 +161,26 @@ def main():
         csv_to_db.import_records(f, db_file, account_names[i])
         i = i+1
 
-    # query secondary account names
+    # query primary account names
     conn = functions_db.create_connection(db_file)
     with conn:
-        secondary_accounts = functions_db.get_secondary_accounts(conn)
+        primary_accounts = functions_db.get_primary_accounts(conn)
     conn.close()
 
-    # match_records_db
-    # todo: fix error if there is no main account
-    for a in secondary_accounts:
-        account_name = a[0]
-        print('Matching records from account {} with main account'.format(account_name))
-        match_records_db.match_records(db_file, account_name, False)
+    if len(primary_accounts) > 0:
+        # query secondary account names
+        conn = functions_db.create_connection(db_file)
+        with conn:
+            secondary_accounts = functions_db.get_secondary_accounts(conn)
+        conn.close()
+
+        # match_records_db
+        for a in secondary_accounts:
+            account_name = a[0]
+            print('Matching records from account {} with main account'.format(account_name))
+            match_records_db.match_records(db_file, account_name, False)
+    else:
+        print('No primary account defined, not matching records.')
 
 if __name__ == '__main__':
     main()
