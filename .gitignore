@@ -1,6 +1,7 @@
 venv/
 __pycache__/
 *.db
+*.sqlite
 *.csv
 *.pdf
 .~lock.*
