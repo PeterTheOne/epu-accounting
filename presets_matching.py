@@ -20,7 +20,20 @@ PRESETS_MATCHING = {
             'date': 1
         }
     },
-    'paypal': {
+    'paypal-de': {
+        'match_filter': {
+            'text': 'paypal'
+        },
+        'match_fields': {
+            'date':   'value_date',
+            'amount': 'amount'
+        },
+        'match_weights': {
+            'date':   0.4,
+            'amount': 0.6
+        }
+    },
+    'paypal-en': {
         'match_filter': {
             'text': 'paypal'
         },

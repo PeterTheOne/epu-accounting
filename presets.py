@@ -33,8 +33,8 @@ PRESETS = {
         },
         'date_cols':   ['Buchungsdatum', 'Transaktionsdatum', 'Abrechnungsdatum']
     },
-    'paypal': {
-        'preset_name': 'PayPal',
+    'paypal-de': {
+        'preset_name': 'PayPal DE',
         'encoding':    'utf-8',
         'date_format': '%d.%m.%Y',
         'delimiter':   ',',
@@ -51,5 +51,24 @@ PRESETS = {
             'Währung': 'currency'
         },
         'date_cols':   ['Datum']
+    },
+    'paypal-en': {
+        'preset_name': 'PayPal EN',
+        'encoding':    'utf-8',
+        'date_format': '%d/%m/%Y',
+        'delimiter':   ',',
+        'quotechar':   '"',
+        'decimal':     '.',
+        'thousands':   ',',
+        'col_names':   None, # column names already present
+        'usecols':     ['Date', 'Name', 'Type', 'Subject', 'Gross', 'Currency', 'Transaction ID', 'Reference Txn ID'], # include from source
+        'col_map':     {
+            'Name':     'contra_name',
+            'Subject':  'subject',
+            'Date':     'value_date',
+            'Gross':    'amount',
+            'Currency': 'currency'
+        },
+        'date_cols':   ['Date']
     }
 }

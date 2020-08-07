@@ -25,20 +25,39 @@ def extract_psk(data):
     return data
 
 
-def extract_paypal(data):
+def extract_paypal(data, lang):
+    # DE / EN language support
+    field_name = 'Name'
+    if lang == 'de':
+        field_type = 'Typ'
+        field_currency = 'Währung'
+        field_transaction_id = 'Transaktionscode'
+        field_transaction_ref = 'Zugehöriger Transaktionscode'
+        value_bank_transaction = 'Bankgutschrift auf PayPal-Konto'
+    else:
+        field_type = 'Type'
+        field_currency = 'Currency'
+        field_transaction_id = 'Transaction ID'
+        field_transaction_ref = 'Reference Txn ID'
+        value_bank_transaction = 'Bank Deposit to PP Account'
+    field_name_x = ''.join((field_name, '_x'))
+    field_name_y = ''.join((field_name, '_y'))
+    field_transaction_id_x = ''.join((field_transaction_id, '_y'))
+    field_transaction_id_y = ''.join((field_transaction_id, '_y'))
+
     # Filter redundant rows
-    data.loc[data['Typ'] == 'Bankgutschrift auf PayPal-Konto', 'status'] = constants.STATUS_IGNORE
-    data.loc[data['Währung'] != 'EUR', 'status'] = constants.STATUS_IGNORE
+    data.loc[data[field_type] == value_bank_transaction, 'status'] = constants.STATUS_IGNORE
+    data.loc[data[field_currency] != 'EUR', 'status'] = constants.STATUS_IGNORE
 
     # Find parent transaction to get missing data (Name)
-    data = pd.merge(data, data[['Transaktionscode', 'Name']], how='left', left_on=['Zugehöriger Transaktionscode'], right_on=['Transaktionscode'])
+    data = pd.merge(data, data[[field_transaction_id, 'Name']], how='left', left_on=[field_transaction_ref], right_on=[field_transaction_id])
     
     # Set missing data
-    data['Name_x'] = data['Name_x'].fillna(data['Name_y'])
-    data.rename(index=str, columns={"Name_x": "Name"}, inplace=True)
+    data[field_name_x] = data[field_name_x].fillna(data[field_name_y])
+    data.rename(index=str, columns={field_name_x: field_name}, inplace=True)
     
     # Clean up unneeded columns
-    data.drop(columns=['Name_y', 'Typ', 'Zugehöriger Transaktionscode', 'Transaktionscode_x', 'Transaktionscode_y'], inplace=True)
+    data.drop(columns=[field_name_y, field_type, field_transaction_ref, field_transaction_id_x, field_transaction_id_y], inplace=True)
     return data
 
 
@@ -55,8 +74,8 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
     data.insert(0, 'status', 0)
     data.insert(0, 'accounting_no', 0)
 
-    if preset_key == 'paypal':
-        data = extract_paypal(data)
+    if preset_key.startswith( 'paypal' ):
+        data = extract_paypal( data, preset_key[7:9] )
 
     # Add columns
     data['import_preset'] = preset_key # todo: default value
