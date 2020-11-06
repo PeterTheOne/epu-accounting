@@ -25,7 +25,27 @@ def import_records_from_file(input_file, csv_date_format='%d.%m.%Y', csv_delimit
 
 def show_plot(data):
 
+    data_freq = data.loc[data['frequency'] == 'monthly']
+
+    print(data_freq)
+
+
+    data = data.loc[data['frequency'].isnull()]
     data = data[['value_date', 'amount']]
+
+
+    for index, row in data_freq.iterrows():
+        print(row['day'])
+        new_dates = pd.date_range(start='2020-09-01', periods=4, freq='MS')
+        new_dates = new_dates + pd.tseries.offsets.DateOffset(days=row['day']-1)
+        print(new_dates)
+
+        for date in new_dates:
+            print(date)
+            new_row = pd.Series(data={'value_date': date, 'amount': row['amount']}, name='x')
+            data = data.append(new_row, ignore_index=True)
+
+
 
     # expand date range by adding add start & end dates
     # todo: does this override existing amounts?
@@ -36,21 +56,21 @@ def show_plot(data):
     # todo: clamp dates
     data = data.set_index('value_date') # remove integer index
 
-    print('corrected:')
-    print(data)
+    #print('corrected:')
+    #print(data)
 
     data = data.resample('1d').sum().fillna(0) # fill in dates
 
-    print('resampled:')
-    print(data)
+    #print('resampled:')
+    #print(data)
 
     data = data.cumsum()
 
     # todo: add current account balance
     data['amount'] += 2000
 
-    #print('final:')
-    #print(data)
+    print('final:')
+    print(data)
 
     root = tk.Tk()
 
