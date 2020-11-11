@@ -8,9 +8,9 @@ class Model:
         self.cursor = None
 
     def database(self):
-        self.conn = sqlite3.connect('pythontut.db')
+        self.conn = sqlite3.connect('db.db')
         self.cursor = self.conn.cursor()
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS `member` (mem_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, firstname TEXT, lastname TEXT)")
+        #self.cursor.execute("CREATE TABLE IF NOT EXISTS `member` (mem_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, firstname TEXT, lastname TEXT)")
 
     def create(self, first_name, last_name):
         self.database()
@@ -24,7 +24,7 @@ class Model:
 
     def read(self):
         self.database()
-        self.cursor.execute("SELECT * FROM `member` ORDER BY `lastname` ASC")
+        self.cursor.execute("SELECT * FROM `records` ORDER BY `id` ASC")
         fetch = self.cursor.fetchall()
         self.cursor.close()
         self.conn.close()

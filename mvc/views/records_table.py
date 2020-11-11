@@ -15,18 +15,22 @@ class RecordsTable():
         scrollbary = Scrollbar(TableTop, orient=VERTICAL)
         scrollbarx = Scrollbar(TableTop, orient=HORIZONTAL)
         #self.tree = ttk.Treeview(Right, columns=("ID", "Firstname", "Lastname"), selectmode="extended", height=350, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
-        self.tree = ttk.Treeview(TableTop, columns=("ID", "Firstname", "Lastname"), selectmode="extended", yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
+        self.tree = ttk.Treeview(TableTop, columns=("ID", "Accounting Date", "Amount", "Comment", "Contra Name"), selectmode="extended", yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
         scrollbary.config(command=self.tree.yview)
         scrollbary.pack(side=RIGHT, fill=Y)
         scrollbarx.config(command=self.tree.xview)
         scrollbarx.pack(side=BOTTOM, fill=X)
         self.tree.heading('ID', text="ID", anchor=W)
-        self.tree.heading('Firstname', text="Firstname", anchor=W)
-        self.tree.heading('Lastname', text="Lastname", anchor=W)
+        self.tree.heading('Accounting Date', text="Accounting Date", anchor=W)
+        self.tree.heading('Amount', text="Amount", anchor=W)
+        self.tree.heading('Comment', text="Comment", anchor=W)
+        self.tree.heading('Contra Name', text="Contra Name", anchor=W)
         self.tree.column('#0', stretch=NO, minwidth=0, width=0)
-        self.tree.column('#1', stretch=NO, minwidth=0, width=40)
-        self.tree.column('#2', stretch=NO, minwidth=0, width=80)
-        self.tree.column('#3', stretch=NO, minwidth=0, width=120)
+        self.tree.column('#1', stretch=NO, minwidth=0, width=40) # ID
+        self.tree.column('#2', stretch=NO, minwidth=0, width=100)
+        self.tree.column('#3', stretch=NO, minwidth=0, width=80)
+        self.tree.column('#4', stretch=NO, minwidth=0, width=140)
+        self.tree.column('#5', stretch=NO, minwidth=0, width=140)
         self.tree.pack(side=LEFT, fill=BOTH, expand=1)
 
         self.btn_read = Button(TableBottom, width=10, text="Read")
@@ -37,7 +41,7 @@ class RecordsTable():
     def update(self, fetch):
         self.tree.delete(*self.tree.get_children())
         for data in fetch:
-            self.tree.insert('', 'end', values=(data[0], data[1], data[2]))
+            self.tree.insert('', 'end', values=(data[0], data[4], data[10], data[14], data[15]))
 
     def get_selected_item(self):
         list_item = self.tree.focus()
