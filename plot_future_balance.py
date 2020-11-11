@@ -23,7 +23,7 @@ def import_records_from_file(input_file, csv_date_format='%d.%m.%Y', csv_delimit
     return data
 
 
-def show_plot(data):
+def process_data(data):
 
     data_freq = data.loc[data['frequency'] == 'monthly']
 
@@ -72,6 +72,10 @@ def show_plot(data):
     print('final:')
     print(data)
 
+    return data
+
+
+def show_plot(data):
     root = tk.Tk()
 
     figure = plt.Figure(figsize=(5, 4), dpi=100)
@@ -90,6 +94,7 @@ def main():
     args = parser.parse_args()
 
     data = import_records_from_file(args.input_file)
+    data = process_data(data)
     show_plot(data)
 
 if __name__ == '__main__':
