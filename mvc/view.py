@@ -46,8 +46,8 @@ class View:
         self.btn_exit.pack(side=RIGHT)
 
     def select(self, event):
-        list_item, member = self.recordstable.get_selected_item()
-        self.sidepanel.fill_form(member)
+        list_item, record = self.recordstable.get_selected_item()
+        self.sidepanel.fill_form(record)
         self.recordstable.btn_read.config(state=DISABLED)
         self.recordstable.btn_delete.config(state=DISABLED)
 
@@ -55,7 +55,7 @@ class View:
         if self.sidepanel.is_form_valid():
             self.txt_result.config(text="Please complete the required field!", fg="red")
         else:
-            self.controller.create(self.sidepanel.first_name, self.sidepanel.last_name)
+            self.controller.create(self.sidepanel.get_current_record())
 
     def create_done(self):
         self.sidepanel.clear_form()
@@ -70,7 +70,7 @@ class View:
         self.txt_result.config(text="Successfully read the data from database", fg="black")
 
     def update(self, event=None):
-        self.controller.update(self.sidepanel.member_id, self.sidepanel.first_name, self.sidepanel.last_name)
+        self.controller.update(self.sidepanel.entry_id, self.sidepanel.get_current_record())
 
     def update_done(self):
         self.sidepanel.clear_form()
@@ -84,8 +84,8 @@ class View:
         else:
             result = tkMessageBox.askquestion('Python: Simple CRUD Applition', 'Are you sure you want to delete this record?', icon="warning")
             if result == 'yes':
-                list_item, member = self.recordstable.get_selected_item()
-                self.controller.delete(member.member_id, list_item)
+                list_item, entry = self.recordstable.get_selected_item()
+                self.controller.delete(entry.entry_id, list_item)
 
     def delete_done(self):
         self.txt_result.config(text="Successfully deleted the data", fg="black")

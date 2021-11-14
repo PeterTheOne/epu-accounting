@@ -22,8 +22,8 @@ class Controller:
         self.root.deiconify()
         self.root.mainloop()
 
-    def create(self, first_name, last_name):
-        fetch = self.model.create(first_name, last_name)
+    def create(self, record):
+        fetch = self.model.create(record)
         # todo: check for errors
         self.view.create_done()
         self.view.update_table(fetch)
@@ -33,12 +33,12 @@ class Controller:
         self.view.read_done()
         self.view.update_table(fetch)
 
-    def update(self, member_id, first_name, last_name):
-        fetch = self.model.update(member_id, first_name, last_name)
+    def update(self, entry_id, first_name, last_name):
+        fetch = self.model.update(entry_id, first_name, last_name)
         self.view.update_done()
         self.view.update_table(fetch)
 
-    def delete(self, member_id, list_item):
-        self.model.delete(member_id)
+    def delete(self, entry_id, list_item):
+        self.model.delete(entry_id)
         self.view.delete_done()
         self.view.remove_from_table(list_item)

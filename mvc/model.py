@@ -12,10 +12,14 @@ class Model:
         self.cursor = self.conn.cursor()
         #self.cursor.execute("CREATE TABLE IF NOT EXISTS `member` (mem_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, firstname TEXT, lastname TEXT)")
 
-    def create(self, first_name, last_name):
+    def create(self, record):
         self.database()
-        self.cursor.execute("INSERT INTO `member` (firstname, lastname) VALUES(?, ?)", (str(first_name.get()), str(last_name.get())))
-        self.cursor.execute("SELECT * FROM `member` ORDER BY `lastname` ASC")
+        #self.cursor.execute("INSERT INTO `records` (firstname, lastname) VALUES(?, ?)", (str(first_name.get()), str(last_name.get())))
+        self.cursor.execute(''' INSERT INTO records (account_id, accounting_no, accounting_date, status,
+                    text, amount, subject, comment, contra_name)
+              VALUES(:account_id, :accounting_no, :accounting_date, :status,
+                     :text, :amount, :subject, :comment, :contra_name) ''', record)
+        self.cursor.execute("SELECT * FROM `records` ORDER BY `id` ASC")
         fetch = self.cursor.fetchall()
         self.conn.commit()
         self.cursor.close()
@@ -30,9 +34,9 @@ class Model:
         self.conn.close()
         return fetch
 
-    def update(self, member_id, first_name, last_name):
+    def update(self, record):
         self.database()
-        self.cursor.execute("UPDATE `member` SET `firstname` = ?, `lastname` = ? WHERE `mem_id` = ?", (str(first_name.get()), str(last_name.get()), int(member_id.get())))
+        #self.cursor.execute("UPDATE `member` SET `firstname` = ?, `lastname` = ? WHERE `mem_id` = ?", (str(first_name.get()), str(last_name.get()), int(member_id.get())))
         self.conn.commit()
         self.cursor.execute("SELECT * FROM `member` ORDER BY `lastname` ASC")
         fetch = self.cursor.fetchall()
@@ -40,9 +44,9 @@ class Model:
         self.conn.close()
         return fetch
 
-    def delete(self, member_id):
+    def delete(self, entry_id):
         self.database()
-        self.cursor.execute("DELETE FROM `member` WHERE `mem_id` = %d" % member_id)
+        self.cursor.execute("DELETE FROM `records` WHERE `id` = %d" % entry_id)
         self.conn.commit()
         self.cursor.close()
         self.conn.close()
