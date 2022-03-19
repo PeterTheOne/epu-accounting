@@ -5,5 +5,6 @@ __pycache__/
 *.csv
 *.pdf
 *.zip
+*.7z
 .~lock.*
 .DS_Store
