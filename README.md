@@ -8,7 +8,9 @@ FREIHEIT * TRANSPARENZ * GELASSENHEIT
 ## install
 - poppler, see [pdf2image Installation](https://github.com/Belval/pdf2image#how-to-install)
 - `pip3 install -r requirements.txt`
-- tkinter (on linux): `[sudo] apt-get install python3-tk`
+- tkinter
+ - linux: `[sudo] apt-get install python3-tk`
+ - macOS: `brew install python-tk`
 - Make sure the `de_DE` locale is available on your OS
 
 ## workflow
