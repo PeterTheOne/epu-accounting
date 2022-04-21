@@ -48,7 +48,7 @@ def import_records(data, db_file, account_name):
         # note: other defaults are set during DB setup and clean
         if account_main:
             data['accounting_date'] = data[date_field]
-            data['status'] = constants.STATUS_DONE
+            data.loc[data['status'] == constants.STATUS_NONE, 'status'] = constants.STATUS_DONE
         # todo: save in account table
         if 'iban' in data.columns:
             data = data.drop(columns=['iban'])
