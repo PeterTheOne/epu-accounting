@@ -128,6 +128,16 @@ class ThreadedTask(threading.Thread):
         self.queue.put("Task finished")
 
 
+def parse_amount(amount):
+    if re.match('(?:\.?\d{1,3}){1,3},\d{2}$', amount) != None: # DE format
+        amount = amount.replace('.', ''); # remove thousands separator
+        amount = amount.replace(',', '.'); # convert decimal separator
+    elif re.match('(?:,?\d{1,3}){1,3}\.\d{2}$', amount) != None: # EN format
+        amount = amount.replace(',', ''); # remove thousands separator
+
+    return amount
+
+
 def read_pdf(data, invoice_file):
     if not os.path.isfile(invoice_file):
         print('Error: File "{0}" doesn\'t exist.'.format(invoice_file))
@@ -139,7 +149,7 @@ def read_pdf(data, invoice_file):
     filename_keywords = os.path.splitext(ntpath.basename(invoice_file))[0]
     filename_keywords = re.split('\W+|_', filename_keywords)
     ibans = re.findall('([A-Z]{2}\d{2}(?:\s?\d{4}){4,8})', text, re.MULTILINE)
-    amounts = re.findall('(\d{1,3},\d{2})', text, re.MULTILINE)
+    amounts = re.findall('((?:\.?\d{1,3}){1,3},\d{2}$|(?:,?\d{1,3}){1,3}\.\d{2}$)', text, re.MULTILINE)
     emails = re.findall('\@(\w+)\..+', text, re.MULTILINE)
     invoice_no = re.findall('(\d{5,20})', text, re.MULTILINE)
 
@@ -157,7 +167,7 @@ def read_pdf(data, invoice_file):
 
     # format for csv matching
     ibans = list(map(lambda iban: ''.join(iban.split()), ibans))
-    amounts = list(map(lambda amount: amount.replace(',', '.'), amounts))
+    amounts = list(map(parse_amount, amounts))
 
     # find date by last
     if len(dates) > 0:
