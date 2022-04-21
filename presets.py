@@ -77,8 +77,8 @@ PRESETS = {
         'date_format': '%d/%m/%Y',
         'delimiter':   ',',
         'quotechar':   '"',
-        'decimal':     '.',
-        'thousands':   ',',
+        'decimal':     ',',
+        'thousands':   '.',
         'col_names':   None, # column names already present
         'usecols':     ['Date', 'Name', 'Type', 'Subject', 'Gross', 'Currency', 'Transaction ID', 'Reference Txn ID'], # include from source
         'col_map':     {
