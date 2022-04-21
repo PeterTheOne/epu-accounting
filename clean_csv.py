@@ -45,7 +45,7 @@ def extract_paypal(data, lang):
         field_currency = 'Currency'
         field_transaction_id = 'Transaction ID'
         field_transaction_ref = 'Reference Txn ID'
-        value_bank_transaction = 'Bank Deposit to PP Account'
+        value_bank_transaction = 'Bank Deposit to PP Account '
     field_name_x = ''.join((field_name, '_x'))
     field_name_y = ''.join((field_name, '_y'))
     field_transaction_id_x = ''.join((field_transaction_id, '_y'))
@@ -56,14 +56,15 @@ def extract_paypal(data, lang):
     data.loc[data[field_currency] != 'EUR', 'status'] = constants.STATUS_IGNORE
 
     # Find parent transaction to get missing data (Name)
-    data = pd.merge(data, data[[field_transaction_id, 'Name']], how='left', left_on=[field_transaction_ref], right_on=[field_transaction_id])
-    
+    data = pd.merge(data, data[[field_transaction_id, field_name]], how='left', left_on=[field_transaction_ref], right_on=[field_transaction_id])
+
     # Set missing data
     data[field_name_x] = data[field_name_x].fillna(data[field_name_y])
     data.rename(index=str, columns={field_name_x: field_name}, inplace=True)
-    
+
     # Clean up unneeded columns
     data.drop(columns=[field_name_y, field_type, field_transaction_ref, field_transaction_id_x, field_transaction_id_y], inplace=True)
+
     return data
 
 
@@ -80,7 +81,6 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
     data.insert(0, 'status', 0)
     data.insert(0, 'accounting_no', 0)
 
-    # todo: not working?
     if preset_key.startswith( 'paypal' ):
         data = extract_paypal( data, preset_key[7:9] )
 
@@ -96,7 +96,6 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
         'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset', 'account']
     data = data.reindex(columns=header_list)
 
-    # todo: not working?
     if preset_key == 'n26':
         data = extract_n26(data)
 
