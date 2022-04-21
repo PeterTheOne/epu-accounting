@@ -1,4 +1,14 @@
 PRESETS_MATCHING = {
+    'n26': {
+        'match_fields': {
+            'date':   'value_date',
+            'amount': 'amount'
+        }#,
+        #'match_weights': {
+        #    'date':   0.4,
+        #    'amount': 0.6
+        #}
+    },
     'psk': {
         'match_fields': {
             'date':   'value_date',

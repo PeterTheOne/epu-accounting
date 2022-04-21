@@ -7,6 +7,12 @@ import constants
 import presets
 
 
+def extract_n26(data):
+    # Filter redundant rows
+    data.loc[data['contra_iban'].isnull(), 'status'] = constants.STATUS_IGNORE # Moving to/from Space
+    return data
+
+
 def extract_psk(data):
     line_id_regex = '([A-Z]{2}/\d{9})'
     iban_regex = '([A-Z]{2}[\d]{2}[A-Z\d]{12,18})'
@@ -74,6 +80,7 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
     data.insert(0, 'status', 0)
     data.insert(0, 'accounting_no', 0)
 
+    # todo: not working?
     if preset_key.startswith( 'paypal' ):
         data = extract_paypal( data, preset_key[7:9] )
 
@@ -88,6 +95,10 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
         'text', 'value_date', 'posting_date', 'billing_date', 'amount', 'currency',
         'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset', 'account']
     data = data.reindex(columns=header_list)
+
+    # todo: not working?
+    if preset_key == 'n26':
+        data = extract_n26(data)
 
     if preset_key == 'psk':
         data = extract_psk(data)
