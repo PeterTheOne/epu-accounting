@@ -62,7 +62,7 @@ def extract_text_pdf(filename):
     # debug option
     debug = 0
     # input option
-    password = b''
+    password = ''
     pagenos = set()
     maxpages = 1
     # output option
