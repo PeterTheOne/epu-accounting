@@ -3,7 +3,7 @@ epu-accounting
 FREIHEIT * TRANSPARENZ * GELASSENHEIT
 
 ## requirements
-- python 3
+- python 3 (up to 3.9, due to PyInquirer error. Run using `python3.9 epu_accounting.py`)
 
 ## install
 - poppler, see [pdf2image Installation](https://github.com/Belval/pdf2image#how-to-install)
