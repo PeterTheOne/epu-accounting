@@ -2,6 +2,6 @@ pandas==1.3.4
 pdfminer.six==20221105
 #git+https://github.com/deanmalmgren/textract@master#egg=textract
 #nltk==3.3
-PyInquirer==1.0.3
+PyInquirer @ git+https://github.com/CITGuru/PyInquirer@7637373429bec66788650cda8091b7a6f12929ee
 pdf2image==1.16.0
 Pillow==8.4.0
