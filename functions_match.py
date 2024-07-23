@@ -73,7 +73,7 @@ def match_keywords(csv_comments, keywords):
 def match_amount(csv_amounts, amount, absolute=True, invert=False):
     weights = []
     for csv_amount in csv_amounts:
-        if amount != False and csv_amount != False:
+        if amount != False and (isinstance(amount, int) or isinstance(amount, float)) and csv_amount != False and (isinstance(csv_amount, int) or isinstance(csv_amount, float)):
             if absolute:
                 diff = abs(csv_amount) - abs(amount)
             elif invert:
