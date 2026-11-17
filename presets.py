@@ -1,6 +1,6 @@
 PRESETS = {
     'n26': {
-        'preset_name': 'N26',
+        'preset_name': 'N26 DE',
         'encoding':    'utf-8',
         'date_format': '%Y-%m-%d',
         'delimiter':   ',',
@@ -17,6 +17,25 @@ PRESETS = {
             'Betrag (EUR)':     'amount'
         },
         'date_cols':   ['Datum']
+    },
+    'n26-en': {
+        'preset_name': 'N26 EN',
+        'encoding':    'utf-8',
+        'date_format': '%Y-%m-%d',
+        'delimiter':   ',',
+        'quotechar':   '"',
+        'decimal':     '.',
+        'thousands':   None,
+        'col_names':   None, # column names already present
+        'usecols':     ['Value Date', 'Partner Name', 'Partner Iban', 'Type', 'Payment Reference', 'Amount (EUR)'], #include from source
+        'col_map':     {
+            'Value Date':        'value_date',
+            'Partner Name':      'contra_name',
+            'Partner Iban':      'contra_iban',
+            'Payment Reference': 'subject',
+            'Amount (EUR)':      'amount'
+        },
+        'date_cols':   ['Value Date']
     },
     'psk': {
         'preset_name': 'BAWAG P.S.K.',
