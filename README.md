@@ -17,8 +17,7 @@ FREIHEIT * TRANSPARENZ * GELASSENHEIT
 - download your bank/credit card/PayPal statements as CSV files
   - for PayPal, go to Reports > Activity download > and choose Transaction type: Balance affecting
 - create blacklist with one column "contra_iban", listing your own IBANs
-- `python3.9 clean.csv [input_file] [output_file] [preset] --drop_empty`
-- `python3.9 apply_blacklist.py [input_file] [blacklist_file] [output_file] --preset [preset]` (presets: see `presets.py`)
+- `python3.9 apply_blacklist.py [input_file] [blacklist_file] [output_file] --preset [preset] --drop_empty --whitelist_text "rückzahlung,zinsen"` (presets: see `presets.py`)
 
 ## workflow
 - remove your old *.db file!
