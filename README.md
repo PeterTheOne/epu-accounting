@@ -42,4 +42,4 @@ FREIHEIT * TRANSPARENZ * GELASSENHEIT
 The `de_DE` locale is not available on your OS.
 - Check using `locale -a | grep de` or `locale -a` (Mac/Linux) which locales are installed.
 - Add `de_DE` to your operating system or
-- replace the `de_DE` string in match_pdf.py, line 40 with your preferred locale
+- copy `.env.example` to `.env` and set `LOCALE` to a locale that is available on your OS

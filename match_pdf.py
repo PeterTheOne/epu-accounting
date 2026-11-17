@@ -1,5 +1,6 @@
 import argparse
 
+import os
 import os.path
 from pathlib import Path
 import ntpath
@@ -18,6 +19,7 @@ from PyInquirer import prompt
 
 import pandas as pd
 
+from dotenv import load_dotenv
 from PIL import ImageTk
 from pdf2image import convert_from_path
 
@@ -26,6 +28,10 @@ from functions_data import get_date_cols, get_record_subject
 from functions_db import create_connection
 from functions_match import match_date, match_keywords, match_exact, match_amount
 from functions_pdf import extract_text_pdf
+
+# local settings (.env, see .env.example)
+load_dotenv()
+LOCALE = os.environ.get('LOCALE', 'de_DE.utf8')
 
 # constants
 SINGLE_FILE = True
@@ -37,7 +43,7 @@ global_image = ''
 global_old_image = ''
 
 def convert_strings_to_dates(value, format):
-    locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
+    locale.setlocale(locale.LC_ALL, LOCALE)
     try:
         return pd.datetime.strptime(value, format)
     except ValueError:
