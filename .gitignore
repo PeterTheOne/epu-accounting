@@ -9,3 +9,4 @@ __pycache__/
 *.7z
 .~lock.*
 .DS_Store
+!examples/*.csv

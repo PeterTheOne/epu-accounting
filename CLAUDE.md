@@ -49,4 +49,13 @@ Record lifecycle via `constants.py`: STATUS_NONE (0, unmatched) → STATUS_DONE 
 - All user interaction is through PyInquirer prompts inside the scripts; scripts double as importable modules (logic in functions, `main()` only parses args), so `epu_accounting.py` imports `match_records_db.match_records(...)` directly.
 - Canonical record columns are the 17-entry `header_list` in `clean_csv.py`; anything reading records assumes that shape (`get_date_cols()` in `functions_data.py` lists the date columns pandas should parse).
 - DB access pattern everywhere: `create_connection`, then `with conn:` blocks with raw SQL cursors, or `pd.read_sql` into a DataFrame for matching logic.
-- No tests exist; to verify a change, run the relevant script against a small fixture CSV and inspect the resulting DB/CSV output.
+- No tests exist; to verify a change, run the relevant script against a fixture in `examples/` and inspect the resulting DB/CSV output (see below).
+
+## Private data and test fixtures
+
+The repo holds real financial data. Access is blocked by deny rules and a `PreToolUse` hook (`.claude/hooks/block-sensitive.sh`, configured in `.claude/settings.json`):
+
+- **Off-limits:** everything in `input/` and `output/`, plus any `.csv`, `.pdf`, or `.db` file outside `examples/`, whether you read it, grep it or reference it in a shell command. If a command is blocked, don't try to get around it; ask the user to run it (`! <command>`).
+- **Allowed for testing:** files in `examples/` (e.g. `examples/n26-en.csv`, `examples/iban_blacklist.csv`). Use these as script inputs.
+- **Temp output:** write generated files (test DBs, exported CSVs, numbered PDFs) to `examples/out/`, e.g. `python3.9 db_to_csv.py examples/out/test.db examples/out/out.csv`. Don't write outputs anywhere else.
+- Refer to example files by paths starting with `examples/` (relative to the repo root). After `cd examples`, a bare `n26-en.csv` would be blocked.

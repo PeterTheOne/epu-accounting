@@ -1,0 +1,6 @@
+"Booking Date","Value Date","Partner Name","Partner Iban",Type,"Payment Reference","Account Name","Amount (EUR)","Original Amount","Original Currency","Exchange Rate"
+2026-07-02,2026-07-02,Hauptkonto,,"Debit Transfer",,Space1,-2342.67,,,
+2026-07-15,2026-07-15,"N26 Kredit",,"Debit Transfer","Rückzahlung des N26 Kredits",Hauptkonto,-237.85,,,
+2026-07-24,2026-07-24,"Auftraggeber GmbH",AT010101010101001011,"Credit Transfer","Re. 26/010",Hauptkonto,600.00,,,
+2026-09-30,2026-09-30,N26,,Fee,"Überziehungszinsen – N26 Bank",Hauptkonto,-142.18,,,
+2026-08-07,2026-08-07,"Mister Me",AT123123123123123123,"Debit Transfer","Gesendet mit N26",Hauptkonto,-50.00,,,
