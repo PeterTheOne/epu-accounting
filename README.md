@@ -13,6 +13,13 @@ FREIHEIT * TRANSPARENZ * GELASSENHEIT
  - macOS: `brew install python-tk`
 - Make sure the `de_DE` locale is available on your OS
 
+## bookamat workflow
+- download your bank/credit card/PayPal statements as CSV files
+  - for PayPal, go to Reports > Activity download > and choose Transaction type: Balance affecting
+- create blacklist with one column "contra_iban", listing your own IBANs
+- `python3.9 clean.csv [input_file] [output_file] [preset] --drop_empty`
+- `python3.9 apply_blacklist.py [input_file] [blacklist_file] [output_file] --preset [preset]` (presets: see `presets.py`)
+
 ## workflow
 - remove your old *.db file!
 - download your bank/credit card/PayPal statements as CSV files
