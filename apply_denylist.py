@@ -1,11 +1,10 @@
 import argparse
 import os.path
-import re
 import pandas as pd
 
 import clean_csv
 import presets
-from functions_data import get_date_cols, print_records
+from functions_data import get_date_cols, print_records, match_list, match_text_keywords
 
 
 def apply_denylist(input_file, denylist_file, output_file, preset_key=None, drop_empty=False, allowlist_text=None, denylist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
@@ -30,15 +29,13 @@ def apply_denylist(input_file, denylist_file, output_file, preset_key=None, drop
 
     denylist = pd.read_csv(filepath_or_buffer=denylist_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 
-    # lines whose subject contains a allowlisted keyword are always kept
-    keywords = [k.strip() for k in (allowlist_text or '').split(',') if k.strip()]
-    if keywords:
-        pattern = '|'.join(re.escape(k) for k in keywords)
-        allowlisted = data['subject'].astype(str).str.contains(pattern, case=False, regex=True, na=False)
-    else:
-        allowlisted = pd.Series(False, index=data.index)
+    denylisted = match_list(data, denylist, denylist_column, denylist_file)
+    if denylisted is None:
+        return
 
-    denylisted = data[denylist_column].isin(denylist[denylist_column])
+    # lines whose subject/comment/text contains a allowlisted keyword are always kept
+    keywords = [k.strip() for k in (allowlist_text or '').split(',') if k.strip()]
+    allowlisted = match_text_keywords(data, keywords)
 
     if drop_empty:
         empty = data['contra_iban'].isnull() | (data['contra_iban'].astype(str).str.strip() == '')
@@ -69,10 +66,11 @@ def main():
     parser.add_argument('--drop_empty', action='store_true',
                         help='also filter out lines with an empty contra_iban')
     parser.add_argument('--allowlist_text',
-                        help='comma separated keywords; lines whose subject contains any of them (case-insensitive) are always kept')
-    #parser.add_argument('--denylist_column')
+                        help='comma separated keywords; lines whose subject, comment or text contains any of them (case-insensitive) are always kept')
+    parser.add_argument('--denylist_column', default='contra_iban',
+                        help='column to match between input_file and denylist_file (default: contra_iban)')
     args = parser.parse_args()
-    apply_denylist(args.input_file, args.denylist_file, args.output_file, args.preset, args.drop_empty, args.allowlist_text)
+    apply_denylist(args.input_file, args.denylist_file, args.output_file, args.preset, args.drop_empty, args.allowlist_text, args.denylist_column)
 
 
 if __name__ == '__main__':
