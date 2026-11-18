@@ -51,18 +51,18 @@ def convert_strings_to_dates(value, format):
 
 
 class PdfGui:
-    def __init__(self, master):
-        self.master = master
+    def __init__(self, main):
+        self.main = main
 
         self.width, self.height = 700, 700
-        master.minsize(width=self.width, height=self.height)
-        master.maxsize(width=self.width, height=self.height)
+        main.minsize(width=self.width, height=self.height)
+        main.maxsize(width=self.width, height=self.height)
         self.image = ''
 
         self.make_widgets()
 
     def make_widgets(self):
-        frame_outer = ttk.Frame(self.master)
+        frame_outer = ttk.Frame(self.main)
         canvas = tk.Canvas(frame_outer, width=self.width-20, height=self.height-50)
         frame_inner = ttk.Frame(canvas)
         scrollx = ttk.Scrollbar(frame_outer, orient='horizontal', command=canvas.xview)
@@ -79,7 +79,7 @@ class PdfGui:
         self.label.grid(sticky='w')
 
         self.prog_bar = ttk.Progressbar(
-            self.master, orient="horizontal",
+            self.main, orient="horizontal",
             length=self.width, mode="indeterminate"
             )
         self.prog_bar.grid(sticky='w')
@@ -108,7 +108,7 @@ class PdfGui:
     def start_threading(self, db_file, input_path='.', automatic=False):
         self.queue = Queue.Queue()
         ThreadedTask(self.queue, db_file, input_path, automatic).start()
-        self.master.after(100, self.process_queue)
+        self.main.after(100, self.process_queue)
 
     def process_queue(self):
         self.update_gui()
@@ -116,9 +116,9 @@ class PdfGui:
         try:
             msg = self.queue.get(0)
             #print(msg) # Show result of the task if needed
-            self.master.destroy() # Close GUI
+            self.main.destroy() # Close GUI
         except Queue.Empty:
-            self.master.after(100, self.process_queue)
+            self.main.after(100, self.process_queue)
 
 
 class ThreadedTask(threading.Thread):

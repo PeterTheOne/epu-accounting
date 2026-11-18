@@ -28,7 +28,7 @@ Delete the old *.db file before starting a fresh run — `epu_accounting.py` doe
 
 ### Legacy CSV-only workflow
 
-`clean_csv.py`, `sort_csv.py`, `contra_histogram_csv.py`, `apply_blacklist.py`/`apply_blacklist_text.py`, `text_histogram_csv.py`, `apply_whitelist.py`, `timesplit_csv.py` form an older pipeline that works without the database (see README). They are mostly superseded by the DB workflow above; `contra_histogram_csv` and `text_histogram_csv` are still imported by `epu_accounting.py` for classification. Also related: `sum_by_contra_csv.py`, `negative_rolling_sum.py`.
+`clean_csv.py`, `sort_csv.py`, `contra_histogram_csv.py`, `apply_denylist.py`/`apply_denylist_text.py`, `text_histogram_csv.py`, `apply_allowlist.py`, `timesplit_csv.py` form an older pipeline that works without the database (see README). They are mostly superseded by the DB workflow above; `contra_histogram_csv` and `text_histogram_csv` are still imported by `epu_accounting.py` for classification. Also related: `sum_by_contra_csv.py`, `negative_rolling_sum.py`.
 
 ## Architecture
 
@@ -56,6 +56,6 @@ Record lifecycle via `constants.py`: STATUS_NONE (0, unmatched) → STATUS_DONE 
 The repo holds real financial data. Access is blocked by deny rules and a `PreToolUse` hook (`.claude/hooks/block-sensitive.sh`, configured in `.claude/settings.json`):
 
 - **Off-limits:** everything in `input/` and `output/`, plus any `.csv`, `.pdf`, or `.db` file outside `examples/`, whether you read it, grep it or reference it in a shell command. If a command is blocked, don't try to get around it; ask the user to run it (`! <command>`).
-- **Allowed for testing:** files in `examples/` (e.g. `examples/n26-en.csv`, `examples/iban_blacklist.csv`). Use these as script inputs.
+- **Allowed for testing:** files in `examples/` (e.g. `examples/n26-en.csv`, `examples/iban_denylist.csv`). Use these as script inputs.
 - **Temp output:** write generated files (test DBs, exported CSVs, numbered PDFs) to `examples/out/`, e.g. `python3.9 db_to_csv.py examples/out/test.db examples/out/out.csv`. Don't write outputs anywhere else.
 - Refer to example files by paths starting with `examples/` (relative to the repo root). After `cd examples`, a bare `n26-en.csv` would be blocked.

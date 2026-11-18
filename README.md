@@ -16,8 +16,8 @@ FREIHEIT * TRANSPARENZ * GELASSENHEIT
 ## bookamat workflow
 - download your bank/credit card/PayPal statements as CSV files
   - for PayPal, go to Reports > Activity download > and choose Transaction type: Balance affecting
-- create blacklist with one column "contra_iban", listing your own IBANs
-- `python3.9 apply_blacklist.py [input_file] [blacklist_file] [output_file] --preset [preset] --drop_empty --whitelist_text "rückzahlung,zinsen"` (presets: see `presets.py`)
+- create denylist with one column "contra_iban", listing your own IBANs
+- `python3.9 apply_denylist.py [input_file] [denylist_file] [output_file] --preset [preset] --drop_empty --allowlist_text "rückzahlung,zinsen"` (presets: see `presets.py`)
 
 ## workflow
 - remove your old *.db file!
@@ -38,9 +38,9 @@ FREIHEIT * TRANSPARENZ * GELASSENHEIT
 - clean
 - sort
 - contra_histogram
-- apply_blacklist
+- apply_denylist
 - text_histogram
-- apply_blacklist_text
+- apply_denylist_text
 - timesplit
 
 ## known issues

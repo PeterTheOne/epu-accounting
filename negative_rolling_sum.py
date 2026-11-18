@@ -3,7 +3,7 @@ import os.path
 import pandas as pd
 
 
-def negative_rolling_sum(input_file, output_file, whitelist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
+def negative_rolling_sum(input_file, output_file, allowlist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(input_file):
         print('Error: File "{0}" don\'t exist.'.format(input_file))
         return
@@ -28,7 +28,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file')
     parser.add_argument('output_file')
-    #parser.add_argument('--whitelist_column')
+    #parser.add_argument('--allowlist_column')
     args = parser.parse_args()
     negative_rolling_sum(args.input_file, args.output_file)
 
