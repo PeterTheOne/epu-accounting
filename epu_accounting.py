@@ -125,10 +125,22 @@ def main():
     input_path = answers['input_path']
     filenames = os.listdir(input_path)
     filenames = list(filter(lambda f: f.endswith('.csv'), filenames))
-    files = map(lambda f: input_path + os.sep + f, filenames)
+
+    # choose a preset per file; skipped files are left out of the import
+    chosen = []
+    for f in filenames:
+        preset = functions_data.choose_preset(input_path + os.sep + f, allow_skip=True)
+        if preset is None:
+            print('Skipping {}'.format(f))
+        else:
+            chosen.append((f, preset))
+    if not chosen:
+        print('No files selected, nothing to import.')
+        return
+    filenames = [f for f, _ in chosen]
 
     # clean
-    files = map(lambda f: clean_csv.clean_from_preset(f, None, functions_data.choose_preset(f)), files)
+    files = map(lambda c: clean_csv.clean_from_preset(input_path + os.sep + c[0], None, c[1]), chosen)
     #print(list(files))
 
     # filter private/company

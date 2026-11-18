@@ -18,8 +18,13 @@ def read_csv_dates(date_cols, date_format, **kwargs):
             data[col] = pd.to_datetime(data[col], format=date_format, errors='coerce')
     return data
 
-def choose_preset(filename):
+SKIP_PRESET = '(skip this file)'
+
+def choose_preset(filename, allow_skip=False):
+    # Returns the chosen preset key, or None if allow_skip is set and the user skips the file
     choices_objects = list(map(lambda c: {'name': c}, presets.PRESETS.keys()))
+    if allow_skip:
+        choices_objects.append({'name': SKIP_PRESET})
     answers = prompt([
         {
             'type': 'list',
@@ -29,6 +34,8 @@ def choose_preset(filename):
         }
     ])
 
+    if answers['preset'] == SKIP_PRESET:
+        return None
     return answers['preset']
 
 def display_text(value):
