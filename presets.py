@@ -61,7 +61,7 @@ PRESETS = {
         'decimal':     ',',
         'thousands':   '.',
         'col_names':   None, # column names already present
-        'usecols':     ['Buchungsdatum', 'Transaktionsdatum', 'Abrechnungsdatum', 'Rechnungstext', 'Währung', 'Betrag'], #include from source
+        'usecols':     ['Buchungsdatum', 'Umsatzdatum', 'Abrechnungsdatum', 'Buchungstext', 'Währung', 'Betrag in EUR'], #include from source
         'col_map':     {
             'Rechnungstext':     'text',
             'Buchungsdatum':     'value_date',
