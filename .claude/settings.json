@@ -2,13 +2,16 @@
   "permissions": {
     "deny": [
       "Read(./input/**)",
-      "Read(./output/**)"
+      "Read(./output/**)",
+      "Read(./*.db)",
+      "Read(./*.db-*)",
+      "Read(./*.sqlite)"
     ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|Read|Grep",
+        "matcher": "Bash|Read|Grep|Glob",
         "hooks": [
           {
             "type": "command",

@@ -157,7 +157,7 @@ def main():
             'type': 'input',
             'name': 'db_file',
             'message': 'Filename to write database to:',
-            'default': 'db.db',
+            'default': 'output/db.db',
         }
     ])
     db_file = answer['db_file']
