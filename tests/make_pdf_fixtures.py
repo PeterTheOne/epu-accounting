@@ -1,8 +1,8 @@
 """Synthetic invoice PDFs for tests/run_fixtures.py.
 
-The harness generates them into its run folder (PDFs are git-ignored). To look at
-them yourself (from the repo root):
-    venv/bin/python tests/make_pdf_fixtures.py [folder, default examples/out/invoices]
+The harness generates them into its run folder on each run. To write them to
+examples/invoices/ (the one PDF folder .gitignore allows), from the repo root:
+    venv/bin/python tests/make_pdf_fixtures.py [folder, default examples/invoices]
 
 Writes minimal single-page PDFs (Helvetica, WinAnsiEncoding) by hand, so no PDF
 library is needed. The invoices are made up and match records in the fixtures:
@@ -90,6 +90,6 @@ def write_invoices(folder):
 
 if __name__ == '__main__':
     import sys
-    folder = sys.argv[1] if len(sys.argv) > 1 else os.path.join('examples', 'out', 'invoices')
+    folder = sys.argv[1] if len(sys.argv) > 1 else os.path.join('examples', 'invoices')
     for path in write_invoices(folder):
         print('wrote ' + path)
