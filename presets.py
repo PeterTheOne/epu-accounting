@@ -55,7 +55,7 @@ PRESETS = {
         # todo: select correct 'Währung' column
         'preset_name': 'PayLife',
         'encoding':    'utf-8',
-        'date_format': '%d.%m.%Y',
+        'date_format': '%Y-%m-%d',
         'delimiter':   ';',
         'quotechar':   '"',
         'decimal':     ',',
@@ -63,14 +63,14 @@ PRESETS = {
         'col_names':   None, # column names already present
         'usecols':     ['Buchungsdatum', 'Umsatzdatum', 'Abrechnungsdatum', 'Buchungstext', 'Währung', 'Betrag in EUR'], #include from source
         'col_map':     {
-            'Rechnungstext':     'text',
+            'Buchungstext':      'text',
             'Buchungsdatum':     'value_date',
-            'Transaktionsdatum': 'posting_date',
+            'Umsatzdatum':       'posting_date',
             'Abrechnungsdatum':  'billing_date',
-            'Betrag':            'amount',
+            'Betrag in EUR':     'amount',
             'Währung':           'currency'
         },
-        'date_cols':   ['Buchungsdatum', 'Transaktionsdatum', 'Abrechnungsdatum']
+        'date_cols':   ['Buchungsdatum', 'Umsatzdatum', 'Abrechnungsdatum']
     },
     'paypal-de': {
         'preset_name': 'PayPal DE',
