@@ -15,7 +15,7 @@ def negative_rolling_sum(input_file, output_file, allowlist_column='contra_iban'
 
     data = data[['value_date', 'amount']].set_index('value_date')
     data = data[data['amount'] < 0]
-    data = data.resample("1d").sum().fillna(0)
+    data = data.resample("1D").sum().fillna(0)
     data = data.rolling(center=False, window=30).sum()
     #print(data)
 

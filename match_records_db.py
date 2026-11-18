@@ -109,10 +109,10 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
                         record_format = '({:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28})'
                     else:
                         record_format = ' {:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28} '
-                    name = record_format.format(parent_row['w'], parent_row[amount_target_field], str(parent_row[date_target_field]), str(parent_row['contra_name']), get_record_subject(parent_row))
+                    name = record_format.format(parent_row['w'], parent_row[amount_target_field], str(parent_row[date_target_field]), display_text(parent_row['contra_name']), get_record_subject(parent_row))
                     choices_objects.append({'value': parent_row.at['id'], 'name': name})
                 choices_objects.append({'value': 'none', 'name': 'None of the above'})
-                record_description = '{:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row[amount_source_field], str(row[date_source_field]), str(row['contra_name']), get_record_subject(row))
+                record_description = '{:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row[amount_source_field], str(row[date_source_field]), display_text(row['contra_name']), get_record_subject(row))
                 answers = prompt([
                     {
                         'type': 'list',

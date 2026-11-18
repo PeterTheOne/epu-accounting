@@ -86,10 +86,10 @@ def extract_paypal(data, lang):
 
     # Set missing data
     data[field_name_x] = data[field_name_x].fillna(data[field_name_y])
-    data.rename(index=str, columns={field_name_x: field_name}, inplace=True)
+    data = data.rename(index=str, columns={field_name_x: field_name})
 
     # Clean up unneeded columns
-    data.drop(columns=[field_name_y, field_type, field_transaction_ref, field_transaction_id_x, field_transaction_id_y], inplace=True)
+    data = data.drop(columns=[field_name_y, field_type, field_transaction_ref, field_transaction_id_x, field_transaction_id_y])
 
     return data
 

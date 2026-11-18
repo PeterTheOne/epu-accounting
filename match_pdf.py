@@ -25,7 +25,7 @@ from PIL import ImageTk
 from pdf2image import convert_from_path
 
 import constants
-from functions_data import get_date_cols, get_record_subject
+from functions_data import get_date_cols, get_record_subject, display_text
 from functions_db import create_connection
 from functions_match import match_date, match_keywords, match_exact, match_amount
 from functions_pdf import extract_text_pdf
@@ -271,7 +271,7 @@ def batch_read_pdf(db_file, input_path='.', automatic=False):
                         record_format = '({:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28})'
                     else:
                         record_format = ' {:.2f}  {:>8}  {:10.10}  {:18.18}  {:28.28} '
-                    name = record_format.format(match['w'], match['amount'], str(match['value_date']), str(match['contra_name']), get_record_subject(match))
+                    name = record_format.format(match['w'], match['amount'], str(match['value_date']), display_text(match['contra_name']), get_record_subject(match))
                     choices_objects.append({'value': match.at['id'], 'name': name})
                 choices_objects.append({'value': 'none', 'name': 'None of the above'})
                 answers = prompt([

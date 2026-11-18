@@ -31,6 +31,12 @@ def choose_preset(filename):
 
     return answers['preset']
 
+def display_text(value):
+    # Text for prompts and logs; missing values show as 'None' (pandas 3 reads missing text as NaN)
+    if pd.isnull(value):
+        return 'None'
+    return str(value)
+
 def get_record_subject(row):
     record_subject = ''
 
@@ -49,7 +55,7 @@ def print_records(title, records):
         return
     print('{} ({}):'.format(title, len(records.index)))
     for _, row in records.iterrows():
-        print('  {:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row['amount'], str(row['value_date']), str(row['contra_name']), get_record_subject(row)))
+        print('  {:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row['amount'], str(row['value_date']), display_text(row['contra_name']), get_record_subject(row)))
     print()
 
 
@@ -83,5 +89,6 @@ def match_text_keywords(data, keywords, columns=('subject', 'comment', 'text')):
     pattern = '|'.join(re.escape(k) for k in keywords)
     for column in columns:
         if column in data.columns:
-            mask |= data[column].fillna('').astype(str).str.contains(pattern, case=False, regex=True)
+            # astype(object) first: an all-empty column is float, and filling it with '' is deprecated
+            mask |= data[column].astype(object).fillna('').astype(str).str.contains(pattern, case=False, regex=True)
     return mask

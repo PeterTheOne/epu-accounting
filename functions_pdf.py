@@ -1,9 +1,6 @@
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.converter import PDFConverter
-from pdfminer.cmapdb import CMapDB
 from pdfminer.layout import LAParams, LTContainer, LTText, LTTextBox, LTImage
 
 # todo: OCR fallback
@@ -59,8 +56,6 @@ class TextConverter(PDFConverter):
 
 
 def extract_text_pdf(filename):
-    # debug option
-    debug = 0
     # input option
     password = ''
     pagenos = set()
@@ -70,12 +65,7 @@ def extract_text_pdf(filename):
     rotation = 0
     caching = True
     laparams = LAParams()
-    #
-    PDFDocument.debug = debug
-    PDFParser.debug = debug
-    CMapDB.debug = debug
-    PDFPageInterpreter.debug = debug
-    #
+    # (pdfminer.six logs via the logging module; the old class-level .debug flags no longer exist)
     rsrcmgr = PDFResourceManager(caching=caching)
     outfp = None
     device = TextConverter(rsrcmgr, outfp, laparams=laparams,

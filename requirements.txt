@@ -1,9 +1,9 @@
-pandas==2.3.3
-pdfminer.six==20221105
+pandas==3.1.1
+pdfminer.six==20260107
 #git+https://github.com/deanmalmgren/textract@master#egg=textract
 #nltk==3.3
 questionary==2.1.1
-prompt_toolkit==3.0.52
-pdf2image==1.16.0
-Pillow==8.4.0
-python-dotenv==0.19.2
+prompt_toolkit==3.0.53
+pdf2image==1.17.0
+Pillow==13.0.0
+python-dotenv==1.2.4

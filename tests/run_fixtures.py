@@ -30,6 +30,7 @@ os.chdir(REPO)
 # Settings normally read from .env; set here so results don't depend on it
 # (load_dotenv() does not override variables that are already set).
 os.environ['N26_OWN_ACCOUNTS'] = 'Hauptkonto,Space1'
+os.environ['LOCALE'] = 'de_DE.UTF-8'
 
 import clean_csv  # noqa: E402
 import contra_histogram_csv  # noqa: E402
@@ -48,6 +49,9 @@ import apply_denylist_text  # noqa: E402
 import apply_allowlist  # noqa: E402
 import negative_rolling_sum  # noqa: E402
 import sum_by_contra_csv  # noqa: E402
+import match_pdf  # noqa: E402
+import number_pdf  # noqa: E402
+import make_pdf_fixtures  # noqa: E402  (tests/ is on sys.path when run as a script)
 
 FIXTURES = {
     # file in examples/: preset
@@ -133,7 +137,7 @@ class FakePrompt:
             raise ValueError('No parent for ' + q['message'])
         if name == 'main_accounts':
             return [n for n in names if n in MAIN_ACCOUNTS]
-        if name == 'parent_record':
+        if name in ('parent_record', 'selected_record'):
             return values[0]  # highest score
         if name == 'company_ibans':
             return names[:1]
@@ -145,15 +149,20 @@ class FakePrompt:
 
 
 def install_prompt(fake):
-    for module in (epu_accounting, setup_db, match_records_db, functions_data):
+    for module in (epu_accounting, setup_db, match_records_db, functions_data, match_pdf):
         module.prompt = fake
 
 
 # --- helpers ---------------------------------------------------------------
 
-def dump_db(db_file, out_dir, prefix):
+def dump_db(db_file, out_dir, prefix, run_dir=None):
     """Write each table to CSV with the csv module (independent of pandas)."""
     import csv
+
+    def value(v):
+        text = repr(v)  # repr keeps types visible (1 vs 1.0 vs '1')
+        # file paths contain the run folder; replace it so runs are comparable
+        return text.replace(run_dir, '<out>') if run_dir else text
     conn = sqlite3.connect(db_file)
     for table in ('accounts', 'records', 'files'):
         cur = conn.execute('SELECT * FROM {} ORDER BY id'.format(table))
@@ -161,7 +170,7 @@ def dump_db(db_file, out_dir, prefix):
             w = csv.writer(f)
             w.writerow([d[0] for d in cur.description])
             for row in cur:
-                w.writerow([repr(v) for v in row])  # repr keeps types visible (1 vs 1.0 vs '1')
+                w.writerow([value(v) for v in row])
         cols = conn.execute('PRAGMA table_info({})'.format(table)).fetchall()
         with open(os.path.join(out_dir, '{}_{}_schema.txt'.format(prefix, table)), 'w') as f:
             f.write('\n'.join('{} {}'.format(c[1], c[2]) for c in cols) + '\n')
@@ -243,13 +252,16 @@ def run(out_dir):
         r.step('histograms + classify_account', histograms)
 
         # 3. automatic matching on a DB built from the cleaned CSVs
-        def auto_pipeline():
-            db = r.path('auto', 'auto.db')
+        def build_auto_db(db):
             make_db(db, [account('psk_paypal_fixture'), account('n26en_fixture'),
                          account('paypal_de_fixture', 'psk_paypal_fixture')])
             for base in ('psk_paypal_fixture', 'n26en_fixture', 'paypal_de_fixture'):
                 csv_to_db.import_records_from_file(r.path('clean', base + '.csv'), db, base)
             match_records_db.match_records(db, 'paypal_de_fixture', automatic=True)
+
+        def auto_pipeline():
+            db = r.path('auto', 'auto.db')
+            build_auto_db(db)
             number_db.number_records(db, YEAR, 1)
             db_to_csv.export_records(db, r.path('auto', 'export_done.csv'))
             db_to_csv.export_records(db, r.path('auto', 'export_all.csv'), True, True)
@@ -277,10 +289,46 @@ def run(out_dir):
             db_to_csv.export_records(db, r.path(sub, 'export_all.csv'), True, True)
             dump_db(db, r.path(sub, 'x')[:-2], 'db')
             os.remove(db)
+        # 5. invoice PDF matching (match_pdf), numbering (number_pdf) and the GUI's page rendering
+        def pdf_matching(automatic):
+            sub = 'pdf_auto' if automatic else 'pdf_interactive'
+            in_dir = r.path(sub, 'in', 'x')[:-2]
+            make_pdf_fixtures.write_invoices(in_dir)
+            db = r.path(sub, 'pdf.db')
+            try:
+                build_auto_db(db)
+                match_pdf.batch_read_pdf(db, in_dir, automatic)
+                number_db.number_records(db, YEAR, 1)
+                numbered = r.path(sub, 'numbered', 'x')[:-2]
+                number_pdf.number_invoices(db, numbered)
+                with open(r.path(sub, 'numbered.txt'), 'w') as f:
+                    f.write('\n'.join(sorted(os.listdir(numbered))) + '\n')
+                shutil.rmtree(numbered)
+                dump_db(db, r.path(sub, 'x')[:-2], 'db', run_dir=out_dir)
+            finally:
+                shutil.rmtree(in_dir)
+                if os.path.exists(db):
+                    os.remove(db)
+        r.step('match_pdf --automatic + number_pdf', pdf_matching, True)
+        r.step('match_pdf (interactive) + number_pdf', pdf_matching, False)
+
+        def pdf_render():
+            # what PdfGui.set_image() does before handing the page to ImageTk
+            in_dir = r.path('pdf_render', 'in', 'x')[:-2]
+            try:
+                with open(r.path('pdf_render', 'render.txt'), 'w') as f:
+                    for path in make_pdf_fixtures.write_invoices(in_dir):
+                        pages = match_pdf.convert_from_path(path, single_file=match_pdf.SINGLE_FILE,
+                                                            size=match_pdf.SIZE, use_cropbox=match_pdf.USE_CROPBOX)
+                        f.write('{}: {} page(s), {} {}\n'.format(os.path.basename(path), len(pages), pages[0].size, pages[0].mode))
+            finally:
+                shutil.rmtree(in_dir)
+        r.step('pdf2image render', pdf_render)
+
         r.step('wizard (no classification)', wizard, False)
         r.step('wizard (with classification)', wizard, True)
 
-        # 5. legacy CSV-only scripts on the cleaned PSK fixture
+        # 6. legacy CSV-only scripts on the cleaned PSK fixture
         r.step('sort_csv', sort_csv.sort_csv, psk_clean, r.path('legacy', 'sorted.csv'))
         r.step('timesplit_csv', timesplit_csv.timesplit_csv, psk_clean, r.path('legacy', 'timesplit', 'x')[:-2])
         r.step('apply_denylist', apply_denylist.apply_denylist, psk_clean, 'examples/iban_denylist.csv',
@@ -310,6 +358,12 @@ def run(out_dir):
 
     log.close()
     prompt_log.close()
+    # replace the run folder in the log so logs of different runs are comparable
+    log_path = os.path.join(out_dir, 'log.txt')
+    with open(log_path) as f:
+        text = f.read()
+    with open(log_path, 'w') as f:
+        f.write(text.replace(out_dir, '<out>'))
     print('Output written to {}'.format(out_dir))
     if r.failures:
         print('{} step(s) failed, see {}:'.format(len(r.failures), os.path.join(out_dir, 'failures.txt')))
