@@ -65,9 +65,7 @@ def import_records_from_file(input_file, db_file, account_name, csv_date_format=
         print('Error: File "{0}" doesn\'t exist.'.format(input_file))
         return
 
-    date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=get_date_cols(), date_parser=date_parser)
+    data = read_csv_dates(get_date_cols(), csv_date_format, filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 
     import_records(data, db_file, account_name)
 

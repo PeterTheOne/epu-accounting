@@ -2,6 +2,8 @@ import argparse
 import os.path
 import pandas as pd
 
+from functions_data import read_csv_dates
+
 
 def timesplit_csv(input_file, output_path='.', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
     if not os.path.isfile(input_file):
@@ -10,9 +12,7 @@ def timesplit_csv(input_file, output_path='.', csv_date_format='%d.%m.%Y', csv_d
     if not os.path.exists(output_path):
         print('Error: No such directory "{0}".'.format(output_path))
         return
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    data = read_csv_dates(['value_date', 'posting_date'], csv_date_format, filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
     #todo: split by value_date or posting_date?
     date_column = 'value_date'
     data['year'] = data[date_column].dt.year

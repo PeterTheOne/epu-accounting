@@ -2,7 +2,7 @@ import argparse
 import os.path
 import pandas as pd
 
-from functions_data import match_list
+from functions_data import match_list, read_csv_dates
 
 
 def apply_allowlist(input_file, allowlist_file, output_file, allowlist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
@@ -12,9 +12,7 @@ def apply_allowlist(input_file, allowlist_file, output_file, allowlist_column='c
     if not os.path.isfile(allowlist_file):
         print('Error: File "{0}" don\'t exist.'.format(allowlist_file))
         return
-    date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    data = read_csv_dates(['value_date', 'posting_date'], csv_date_format, filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 
     allowlist = pd.read_csv(filepath_or_buffer=allowlist_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 

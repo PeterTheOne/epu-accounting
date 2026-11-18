@@ -82,7 +82,7 @@ def match_records(db_file, account_name, include_all=False, automatic=False, csv
 
             # filter main (target) records
             for key, value in source_preset['match_filter'].items():
-                main = main.loc[main[key].str.contains(r'(?:' + value + ')(?i)')]
+                main = main.loc[main[key].str.contains(value, case=False, regex=True)]
 
             # weights
             amount_weights = match_amount(main[amount_target_field], amount, absolute=False)

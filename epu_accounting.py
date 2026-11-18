@@ -1,7 +1,7 @@
 import os
 import re
-from PyInquirer import prompt
-from PyInquirer import Validator, ValidationError
+from questionary import prompt
+from prompt_toolkit.validation import Validator, ValidationError
 import clean_csv
 import contra_histogram_csv
 import text_histogram_csv
@@ -37,6 +37,14 @@ QUESTIONS = [
 ]
 
 
+def prompt_checkbox(questions):
+    # questionary crashes on a checkbox without choices, so skip it and select nothing
+    question = questions[0]
+    if len(question['choices']) == 0:
+        return {question['name']: []}
+    return prompt(questions)
+
+
 def classify_account(data, min_count=5, min_weight=2.5):
     # generate histograms
     hist = contra_histogram_csv.contra_histogram(data)
@@ -52,8 +60,8 @@ def classify_account(data, min_count=5, min_weight=2.5):
     #print(text_choices)
 
     # get user input
-    choices_objects = map(lambda c: {'name': c}, choices)
-    answers = prompt([
+    choices_objects = list(map(lambda c: {'name': c}, choices))
+    answers = prompt_checkbox([
         {
             'type': 'checkbox',
             'name': 'company_ibans',
@@ -64,8 +72,8 @@ def classify_account(data, min_count=5, min_weight=2.5):
     company_ibans = answers['company_ibans']
 
 
-    choices_objects = map(lambda c: {'name': c}, text_choices)
-    answers = prompt([
+    choices_objects = list(map(lambda c: {'name': c}, text_choices))
+    answers = prompt_checkbox([
         {
             'type': 'checkbox',
             'name': 'private_texts',
@@ -76,8 +84,8 @@ def classify_account(data, min_count=5, min_weight=2.5):
     private_texts = answers['private_texts']
 
     text_choices = filter(lambda t: t not in private_texts, text_choices)
-    choices_objects = map(lambda c: {'name': c}, text_choices)
-    answers = prompt([
+    choices_objects = list(map(lambda c: {'name': c}, text_choices))
+    answers = prompt_checkbox([
         {
             'type': 'checkbox',
             'name': 'company_texts',
@@ -96,6 +104,8 @@ def classify_account(data, min_count=5, min_weight=2.5):
     #print(list(company_ibans))
     #print(list(private_ibans))
 
+    # 'account' starts out empty (float NaN); make it a text column before assigning labels
+    data['account'] = data['account'].astype(object)
     data.loc[data['contra_iban'].isin(company_ibans), 'account'] = 'company'
     data.loc[data['contra_iban'].isin(private_ibans), 'account'] = 'private'
 

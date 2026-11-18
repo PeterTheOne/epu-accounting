@@ -9,13 +9,14 @@ import re
 from collections import Counter
 
 import locale
+import datetime
 
 import threading
 import queue as Queue
 
 import tkinter as tk
 from tkinter import ttk
-from PyInquirer import prompt
+from questionary import prompt
 
 import pandas as pd
 
@@ -45,7 +46,7 @@ global_old_image = ''
 def convert_strings_to_dates(value, format):
     locale.setlocale(locale.LC_ALL, LOCALE)
     try:
-        return pd.datetime.strptime(value, format)
+        return datetime.datetime.strptime(value, format)
     except ValueError:
         return False
 
@@ -135,10 +136,10 @@ class ThreadedTask(threading.Thread):
 
 
 def parse_amount(amount):
-    if re.match('(?:\.?\d{1,3}){1,3},\d{2}$', amount) != None: # DE format
+    if re.match(r'(?:\.?\d{1,3}){1,3},\d{2}$', amount) != None: # DE format
         amount = amount.replace('.', ''); # remove thousands separator
         amount = amount.replace(',', '.'); # convert decimal separator
-    elif re.match('(?:,?\d{1,3}){1,3}\.\d{2}$', amount) != None: # EN format
+    elif re.match(r'(?:,?\d{1,3}){1,3}\.\d{2}$', amount) != None: # EN format
         amount = amount.replace(',', ''); # remove thousands separator
 
     return amount
@@ -153,17 +154,17 @@ def read_pdf(data, invoice_file):
 
     # extract important info
     filename_keywords = os.path.splitext(ntpath.basename(invoice_file))[0]
-    filename_keywords = re.split('\W+|_', filename_keywords)
-    ibans = re.findall('([A-Z]{2}\d{2}(?:\s?\d{4}){4,8})', text, re.MULTILINE)
-    amounts = re.findall('((?:\.?\d{1,3}){1,3},\d{2}$|(?:,?\d{1,3}){1,3}\.\d{2}$)', text, re.MULTILINE)
-    emails = re.findall('\@(\w+)\..+', text, re.MULTILINE)
-    invoice_no = re.findall('(\d{5,20})', text, re.MULTILINE)
+    filename_keywords = re.split(r'\W+|_', filename_keywords)
+    ibans = re.findall(r'([A-Z]{2}\d{2}(?:\s?\d{4}){4,8})', text, re.MULTILINE)
+    amounts = re.findall(r'((?:\.?\d{1,3}){1,3},\d{2}$|(?:,?\d{1,3}){1,3}\.\d{2}$)', text, re.MULTILINE)
+    emails = re.findall(r'\@(\w+)\..+', text, re.MULTILINE)
+    invoice_no = re.findall(r'(\d{5,20})', text, re.MULTILINE)
 
     # extract dates
     # TODO: support for other locales
     date_regex_format = [
-        {'regex': '(\d{1,2}\.\d{1,2}\.\d{4})', 'format': '%d.%m.%Y'},
-        {'regex': '(\d{1,2}\.\s+(?:Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|September|Oktober|November|Dezember)\s+\d{4})', 'format': '%d. %B %Y'},
+        {'regex': r'(\d{1,2}\.\d{1,2}\.\d{4})', 'format': '%d.%m.%Y'},
+        {'regex': r'(\d{1,2}\.\s+(?:Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|September|Oktober|November|Dezember)\s+\d{4})', 'format': '%d. %B %Y'},
     ]
     dates = []
     for regex_format in date_regex_format:

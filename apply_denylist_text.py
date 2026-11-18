@@ -1,6 +1,8 @@
 import argparse
 import os.path
 import pandas as pd
+
+from functions_data import read_csv_dates
 import re
 
 
@@ -11,9 +13,7 @@ def apply_denylist_text(input_file, denylist_file, output_file, denylist_column=
     if not os.path.isfile(denylist_file):
         print('Error: File "{0}" don\'t exist.'.format(denylist_file))
         return
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    data = read_csv_dates(['value_date', 'posting_date'], csv_date_format, filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 
     denylist = pd.read_csv(filepath_or_buffer=denylist_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
     denylist[denylist_column] = denylist[denylist_column].map(lambda x: re.escape(x))

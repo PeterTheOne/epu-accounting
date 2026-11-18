@@ -2,20 +2,22 @@ import argparse
 import os.path
 import pandas as pd
 
+from functions_data import read_csv_dates
+
 
 def contra_histogram(data):
     pd.set_option('max_colwidth', 800)
-    line_id_regex = '([A-Z]{2}/\d{9})'
-    iban_regex = ' ([A-Z]{2}\d{14,20}) '
-    old_account_regex = ' (\d{11})'
+    line_id_regex = r'([A-Z]{2}/\d{9})'
+    iban_regex = r' ([A-Z]{2}\d{14,20}) '
+    old_account_regex = r' (\d{11})'
     bic_regex = ' (([a-zA-Z]){4}([a-zA-Z]){2}([0-9a-zA-Z]){2}([0-9a-zA-Z]{3})?)'
-    blz_regex = ' (\d{5})'
-    date_regex = ' (\d{2}\.\d{2}\.(\d{4})?) '
+    blz_regex = r' (\d{5})'
+    date_regex = r' (\d{2}\.\d{2}\.(\d{4})?) '
 
     data['text_clean'] = data['text'].str.split(iban_regex, expand=True)[0]
-    data['text_clean'] = data['text_clean'].str.replace(line_id_regex, '').str.replace(iban_regex, '') \
-        .str.replace(old_account_regex, '').str.replace(bic_regex, '').str.replace(blz_regex, '') \
-        .str.replace(date_regex, '').replace('\s+', ' ', regex=True).str.strip()
+    data['text_clean'] = data['text_clean'].str.replace(line_id_regex, '', regex=True).str.replace(iban_regex, '', regex=True) \
+        .str.replace(old_account_regex, '', regex=True).str.replace(bic_regex, '', regex=True).str.replace(blz_regex, '', regex=True) \
+        .str.replace(date_regex, '', regex=True).replace(r'\s+', ' ', regex=True).str.strip()
 
     def ngram_string_list_combined(data, start=1, end=5):
         def ngram_string_list(data, n=2):
@@ -52,9 +54,7 @@ def main(csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_e
     if not os.path.isfile(args.input_file):
         print('Error: File "{0}" don\'t exist.'.format(args.input_file))
         return
-    date_parser = lambda x: pd.datetime.strptime(x, csv_date_format)
-    data = pd.read_csv(filepath_or_buffer=args.input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                       parse_dates=['value_date', 'posting_date'], date_parser=date_parser)
+    data = read_csv_dates(['value_date', 'posting_date'], csv_date_format, filepath_or_buffer=args.input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
     hist = contra_histogram(data)
     hist.to_csv(path_or_buf=args.output_file, index=False,
                 sep=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,

@@ -2,14 +2,14 @@ import argparse
 #import os.path
 #import sqlite3
 #from sqlite3 import Error
-from PyInquirer import prompt
+from questionary import prompt
 from functions_db import create_connection, create_table, create_account
 
 
 def query_account_tree(account_names):
     if len(account_names) > 1:
         # Classify main accounts
-        choices_objects = map(lambda c: {'name': c}, account_names)
+        choices_objects = list(map(lambda c: {'name': c}, account_names))
         answers = prompt([
             {
                 'type': 'checkbox',
@@ -30,7 +30,7 @@ def query_account_tree(account_names):
             parent_account = False
             if len(main_accounts) > 1:
                 # Multiple main accounts, ask for individual parent
-                choices_objects = map(lambda c: {'name': c}, main_accounts)
+                choices_objects = list(map(lambda c: {'name': c}, main_accounts))
                 answers = prompt([
                     {
                         'type': 'list',

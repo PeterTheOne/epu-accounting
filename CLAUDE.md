@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 epu-accounting is a CLI tool for Austrian EPU (Ein-Personen-Unternehmen / sole proprietorship) bookkeeping. It ingests bank / credit card / PayPal statements as CSV, normalizes them with per-institution presets, matches secondary-account transactions (card/PayPal) against their main bank account, optionally matches invoice PDFs to records, numbers the records for accounting, and exports a final CSV.
 
-Python 3 only — pinned to **3.9** (PyInquirer incompatibility with newer versions). Run scripts with `python3.9`. There is no test suite, no linter config, and no build step.
+Python 3 only — currently **3.9** (the pinned dependency versions are the last that support it; a move to a newer Python is planned). Run scripts with the venv's Python (`venv/bin/python`, see README). There is no unit test suite, no linter config, and no build step; `tests/run_fixtures.py` is a regression harness (see Conventions).
 
 ## Setup
 
-- `pip3 install -r requirements.txt` (PyInquirer is installed from a pinned git commit)
+- `venv/bin/pip install -r requirements.txt` into a venv (see README). Prompts use questionary (on prompt_toolkit 3).
 - poppler (for pdf2image), tkinter (`brew install python-tk` on macOS)
 - The `de_DE` locale must be available (`match_pdf.py` and `clean_csv.py` call `locale.setlocale`)
 
@@ -18,7 +18,7 @@ Python 3 only — pinned to **3.9** (PyInquirer incompatibility with newer versi
 
 Scripts are run in this order; each is a standalone CLI taking positional args (see each file's `argparse` in `main()`):
 
-1. `python3.9 epu_accounting.py` — interactive wizard (PyInquirer). Prompts for the `input/` folder of CSVs, cleans each via a chosen preset, optionally classifies records private/company (built from contra-IBAN and text histograms), asks for a db filename, sets up the schema, imports all CSVs, and then runs `match_records_db` for every secondary account.
+1. `python3.9 epu_accounting.py` — interactive wizard (questionary). Prompts for the `input/` folder of CSVs, cleans each via a chosen preset, optionally classifies records private/company (built from contra-IBAN and text histograms), asks for a db filename, sets up the schema, imports all CSVs, and then runs `match_records_db` for every secondary account.
 2. (optional) `python3.9 match_pdf.py [db_file] [pdf_dir]` — match invoice PDFs to records. `--gui` shows the PDF in a tkinter viewer alongside the prompt; `--automatic` skips prompts and accepts the top match above a weight threshold (0.3).
 3. `python3.9 number_db.py [db_file] [year]` — assigns sequential `accounting_no` to all STATUS_DONE records of a year (`--start N` to begin at N).
 4. (optional) `python3.9 number_pdf.py [db_file] [output_dir]` — copies matched invoice PDFs into `output_dir`, prefixed with their accounting number.
@@ -38,7 +38,7 @@ Three layers, all coordinating through a SQLite database:
 
 **Matching** — two independent matchers share `functions_match.py`, which computes per-row weights in [0,1]:
 - `match_records_db.py` links secondary-account records (credit card/PayPal) to a parent record on the main account. Per-preset config lives in `presets_matching.py`: `match_fields` picks which date/amount columns to compare, `match_weights` sets factor weights (note: weights are taken from the *source* preset), `match_filter` pre-filters candidate main records by regex on a text column. On a match it sets the orphan's `parent_id` and `accounting_date` (from the parent record's date) and marks it STATUS_DONE, while marking the parent STATUS_IGNORE so it isn't double-counted.
-- `match_pdf.py` reads each PDF via `functions_pdf.py` (pdfminer-based `TextConverter`, first page only), extracts IBANs, amounts, dates (German month names, `de_DE` locale), invoice numbers and email domains plus filename keywords, then combines six weighted signals (weights hardcoded around line 202) into a score. Interactive mode shows the top 10 as a PyInquirer list; GUI mode runs `batch_read_pdf` in a thread while a tkinter window displays the current page.
+- `match_pdf.py` reads each PDF via `functions_pdf.py` (pdfminer-based `TextConverter`, first page only), extracts IBANs, amounts, dates (German month names, `de_DE` locale), invoice numbers and email domains plus filename keywords, then combines six weighted signals (weights hardcoded around line 202) into a score. Interactive mode shows the top 10 as a questionary list; GUI mode runs `batch_read_pdf` in a thread while a tkinter window displays the current page.
 
 **Database** — schema created by `setup_db.py`: `accounts` (self-referencing `parent_id`, `main_account` flag — main accounts provide the accounting date, secondary accounts get matched into them), `records` (canonical columns from clean_csv plus `parent_id`, `accounting_no`, `accounting_date`, `status`), `files` (PDF ↔ record links). `functions_db.py` holds connection helpers and insert helpers. `csv_to_db.py` appends cleaned DataFrames via `to_sql`; on import, main-account records get `accounting_date` = preset date field and STATUS_DONE, secondary records keep STATUS_NONE until matched.
 
@@ -46,10 +46,10 @@ Record lifecycle via `constants.py`: STATUS_NONE (0, unmatched) → STATUS_DONE 
 
 ## Conventions
 
-- All user interaction is through PyInquirer prompts inside the scripts; scripts double as importable modules (logic in functions, `main()` only parses args), so `epu_accounting.py` imports `match_records_db.match_records(...)` directly.
-- Canonical record columns are the 17-entry `header_list` in `clean_csv.py`; anything reading records assumes that shape (`get_date_cols()` in `functions_data.py` lists the date columns pandas should parse).
+- All user interaction is through `questionary.prompt` (PyInquirer-style question dicts) inside the scripts. questionary crashes on a checkbox without choices, so skip such prompts (see `prompt_checkbox` in `epu_accounting.py`). Scripts double as importable modules (logic in functions, `main()` only parses args), so `epu_accounting.py` imports `match_records_db.match_records(...)` directly.
+- Canonical record columns are the 17-entry `header_list` in `clean_csv.py`; anything reading records assumes that shape (`get_date_cols()` in `functions_data.py` lists the date columns pandas should parse). Read CSVs that have date columns with `functions_data.read_csv_dates(date_cols, date_format, **read_csv_kwargs)`, not `read_csv(parse_dates=...)`: it reads dates as text first (so `thousands='.'` can't turn `03.07.2026` into a number) and turns unparseable values into NaT.
 - DB access pattern everywhere: `create_connection`, then `with conn:` blocks with raw SQL cursors, or `pd.read_sql` into a DataFrame for matching logic.
-- No tests exist; to verify a change, run the relevant script against a fixture in `examples/` and inspect the resulting DB/CSV output (see below).
+- To verify a change, run `venv/bin/python tests/run_fixtures.py examples/out/<name>` before and after it, then `diff -r` the two folders. The harness runs every non-PDF script on the fixtures with scripted prompt answers and a pinned "today", so unchanged behaviour gives identical output. Known existing failure: "wizard (with classification)" (`text_histogram_csv` crashes on N26 files, whose `text` column is empty).
 
 ## Private data and test fixtures
 

@@ -4,7 +4,7 @@ import pandas as pd
 
 import clean_csv
 import presets
-from functions_data import get_date_cols, print_records, match_list, match_text_keywords
+from functions_data import get_date_cols, print_records, match_list, match_text_keywords, read_csv_dates
 
 
 def apply_denylist(input_file, denylist_file, output_file, preset_key=None, drop_empty=False, allowlist_text=None, denylist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
@@ -23,9 +23,7 @@ def apply_denylist(input_file, denylist_file, output_file, preset_key=None, drop
         data = clean_csv.clean_from_preset(input_file, None, preset_key)
     else:
         # already cleaned CSV
-        date_parser = lambda x: pd.to_datetime(x, format=csv_date_format, errors='coerce')
-        data = pd.read_csv(filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding,
-                           parse_dates=get_date_cols(), date_parser=date_parser)
+        data = read_csv_dates(get_date_cols(), csv_date_format, filepath_or_buffer=input_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 
     denylist = pd.read_csv(filepath_or_buffer=denylist_file, delimiter=csv_delimiter, quotechar=csv_quotechar, encoding=csv_encoding)
 

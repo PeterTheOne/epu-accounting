@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 import constants
 import presets
-from functions_data import print_records
+from functions_data import print_records, read_csv_dates
 
 
 load_dotenv()
@@ -40,9 +40,9 @@ def extract_n26(data):
 
 
 def extract_psk(data):
-    line_id_regex = '([A-Z]{2}/\d{9})'
-    iban_regex = '([A-Z]{2}[\d]{2}[A-Z\d]{12,18})'
-    first_two_words_regex = '([\w\.]+ [\w\.]+)'
+    line_id_regex = r'([A-Z]{2}/\d{9})'
+    iban_regex = r'([A-Z]{2}[\d]{2}[A-Z\d]{12,18})'
+    first_two_words_regex = r'([\w\.]+ [\w\.]+)'
     word_regex = '([a-zA-Z_]{3,})'
 
     data['line_id'] = data['text'].str.extract('(.*) ' + line_id_regex, expand=True)[1]
@@ -96,12 +96,10 @@ def extract_paypal(data, lang):
 
 def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, header=0, usecols=[], col_map=[], date_cols=[]):
     locale.setlocale(locale.LC_NUMERIC, '')
-    date_parser = lambda x: pd.to_datetime(x, format=date_format, errors='coerce')
-    data = pd.read_csv(filepath_or_buffer=input_file, delimiter=delimiter,
+    data = read_csv_dates(date_cols, date_format, filepath_or_buffer=input_file, delimiter=delimiter,
                        quotechar=quotechar, encoding=encoding, header=header,
                        decimal=decimal, thousands=thousands,
-                       names=col_names, usecols=usecols,
-                       parse_dates=date_cols, date_parser=date_parser)
+                       names=col_names, usecols=usecols)
 
     # Set default values for new columns
     data.insert(0, 'status', 0)

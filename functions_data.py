@@ -1,4 +1,4 @@
-from PyInquirer import prompt
+from questionary import prompt
 import re
 import pandas as pd
 
@@ -7,8 +7,19 @@ import presets
 def get_date_cols():
     return ['value_date', 'posting_date', 'billing_date', 'accounting_date']
 
+def read_csv_dates(date_cols, date_format, **kwargs):
+    # Read a CSV and parse date_cols with date_format (replaces read_csv's removed date_parser).
+    # Date columns are read as text first, so e.g. thousands='.' can't turn "03.07.2026" into a number.
+    # Values that don't match date_format become NaT instead of raising.
+    date_cols = list(date_cols or [])
+    data = pd.read_csv(dtype={col: str for col in date_cols}, **kwargs)
+    for col in date_cols:
+        if col in data.columns:
+            data[col] = pd.to_datetime(data[col], format=date_format, errors='coerce')
+    return data
+
 def choose_preset(filename):
-    choices_objects = map(lambda c: {'name': c}, presets.PRESETS.keys())
+    choices_objects = list(map(lambda c: {'name': c}, presets.PRESETS.keys()))
     answers = prompt([
         {
             'type': 'list',
