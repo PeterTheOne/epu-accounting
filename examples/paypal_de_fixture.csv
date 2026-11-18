@@ -1,0 +1,5 @@
+"Datum","Uhrzeit","Name","Typ","Betreff","Brutto","Währung","Transaktionscode","Zugehöriger Transaktionscode"
+"01.07.2026","10:00","Shop GmbH","Zahlung","Bestellung 1","-20,00","EUR","T1",""
+"01.07.2026","10:00","","Bankgutschrift auf PayPal-Konto","","20,00","EUR","T2","T1"
+"02.07.2026","11:00","US Store","Zahlung","Order 2","-15,00","USD","T3",""
+"02.07.2026","11:00","","Allgemeine Währungsumrechnung","","-14,00","EUR","T4","T3"

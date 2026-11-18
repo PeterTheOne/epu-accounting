@@ -1,0 +1,4 @@
+"Datum","Empfänger","Kontonummer","Transaktionstyp","Verwendungszweck","Betrag (EUR)"
+2026-07-02,"Hauptkonto",,"Gutschrift",,100.00
+2026-07-15,"N26 Kredit",,"Belastung","Rückzahlung",-237.85
+2026-07-24,"Auftraggeber GmbH",AT010101010101001011,"Gutschrift","Re. 26/010",600.00

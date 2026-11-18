@@ -2,14 +2,40 @@ import argparse
 import os.path
 import pandas as pd
 import locale
+from dotenv import load_dotenv
 
 import constants
 import presets
+from functions_data import print_records
+
+
+load_dotenv()
+
+# Temporary column holding why a record was set to STATUS_IGNORE (for logging only)
+IGNORE_REASON = 'ignore_reason'
+
+
+def mark_ignored(data, mask, reason):
+    # Set status to ignored and remember the first reason
+    data.loc[mask, 'status'] = constants.STATUS_IGNORE
+    data.loc[mask & data[IGNORE_REASON].isnull(), IGNORE_REASON] = reason
+
+
+def get_n26_own_accounts():
+    # Names of own N26 accounts (main account and Spaces), comma-separated in .env
+    names = os.environ.get('N26_OWN_ACCOUNTS', '')
+    return [name.strip() for name in names.split(',') if name.strip()]
 
 
 def extract_n26(data):
-    # Filter redundant rows
-    data.loc[data['contra_iban'].isnull(), 'status'] = constants.STATUS_IGNORE # Moving to/from Space
+    # Filter redundant rows: moving money to/from a Space. These have no IBAN and
+    # the partner is one of the own accounts (main account or a Space). Other rows
+    # without IBAN (fees, interest, N26 loan repayments) are real bookings.
+    own_accounts = get_n26_own_accounts()
+    if not own_accounts:
+        print('Warning: N26_OWN_ACCOUNTS not set in .env, Space transfers will not be ignored')
+    internal = data['contra_iban'].isnull() & data['contra_name'].isin(own_accounts)
+    mark_ignored(data, internal, 'N26 transfer between own accounts')
     return data
 
 
@@ -52,8 +78,8 @@ def extract_paypal(data, lang):
     field_transaction_id_y = ''.join((field_transaction_id, '_y'))
 
     # Filter redundant rows
-    data.loc[data[field_type] == value_bank_transaction, 'status'] = constants.STATUS_IGNORE
-    data.loc[data[field_currency] != 'EUR', 'status'] = constants.STATUS_IGNORE
+    mark_ignored(data, data[field_type] == value_bank_transaction, 'PayPal bank deposit')
+    mark_ignored(data, data[field_currency] != 'EUR', 'PayPal non-EUR currency')
 
     # Find parent transaction to get missing data (Name)
     data = pd.merge(data, data[[field_transaction_id, field_name]], how='left', left_on=[field_transaction_ref], right_on=[field_transaction_id])
@@ -68,11 +94,11 @@ def extract_paypal(data, lang):
     return data
 
 
-def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, usecols=[], col_map=[], date_cols=[]):
+def clean_csv(input_file, output_file, preset_key='', preset_name='', date_format='%d.%m.%Y', delimiter=';', quotechar='"', encoding='ISO/-8859-1', decimal=',', thousands='.', col_names=None, header=0, usecols=[], col_map=[], date_cols=[]):
     locale.setlocale(locale.LC_NUMERIC, '')
     date_parser = lambda x: pd.to_datetime(x, format=date_format, errors='coerce')
     data = pd.read_csv(filepath_or_buffer=input_file, delimiter=delimiter,
-                       quotechar=quotechar, encoding=encoding, header=0,
+                       quotechar=quotechar, encoding=encoding, header=header,
                        decimal=decimal, thousands=thousands,
                        names=col_names, usecols=usecols,
                        parse_dates=date_cols, date_parser=date_parser)
@@ -80,6 +106,7 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
     # Set default values for new columns
     data.insert(0, 'status', 0)
     data.insert(0, 'accounting_no', 0)
+    data[IGNORE_REASON] = None
 
     if preset_key.startswith( 'paypal' ):
         data = extract_paypal( data, preset_key[7:9] )
@@ -94,13 +121,18 @@ def clean_csv(input_file, output_file, preset_key='', preset_name='', date_forma
     header_list = ['account_id', 'accounting_no', 'status',
         'text', 'value_date', 'posting_date', 'billing_date', 'amount', 'currency',
         'subject', 'line_id', 'comment', 'accounting_date', 'contra_name', 'contra_iban', 'contra_bic', 'import_preset', 'account']
-    data = data.reindex(columns=header_list)
+    data = data.reindex(columns=header_list + [IGNORE_REASON])
 
-    if preset_key == 'n26':
+    if preset_key.startswith('n26'):
         data = extract_n26(data)
 
     if preset_key == 'psk':
         data = extract_psk(data)
+
+    # log ignored records grouped by reason
+    for reason, records in data[data[IGNORE_REASON].notnull()].groupby(IGNORE_REASON, sort=False):
+        print_records('Ignored: {}'.format(reason), records)
+    data = data.drop(columns=[IGNORE_REASON])
 
     if output_file:
         data.to_csv(path_or_buf=output_file, index=False, date_format='%d.%m.%Y', sep=',', decimal='.', quotechar='"', encoding='utf-8')

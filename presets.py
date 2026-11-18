@@ -46,6 +46,7 @@ PRESETS = {
         'decimal':     ',',
         'thousands':   '.',
         'col_names':   ['iban', 'text', 'value_date', 'posting_date', 'amount', 'currency'], # add missing column names
+        'header':      None, # source has no header row, first line is data
         'usecols':     None,
         'col_map':     [],
         'date_cols':   ['value_date', 'posting_date']

@@ -5,16 +5,7 @@ import pandas as pd
 
 import clean_csv
 import presets
-from functions_data import get_date_cols, get_record_subject
-
-
-def print_records(title, records):
-    if records.empty:
-        return
-    print('{} ({}):'.format(title, len(records.index)))
-    for _, row in records.iterrows():
-        print('  {:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row['amount'], str(row['value_date']), str(row['contra_name']), get_record_subject(row)))
-    print()
+from functions_data import get_date_cols, print_records
 
 
 def apply_denylist(input_file, denylist_file, output_file, preset_key=None, drop_empty=False, allowlist_text=None, denylist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):

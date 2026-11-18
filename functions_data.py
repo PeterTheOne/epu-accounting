@@ -1,4 +1,5 @@
 from PyInquirer import prompt
+import pandas as pd
 
 import presets
 
@@ -21,11 +22,20 @@ def choose_preset(filename):
 def get_record_subject(row):
     record_subject = ''
 
-    if row['subject'] != None:
+    if pd.notnull(row['subject']):
         record_subject = row['subject']
-    elif row['comment'] != None:
+    elif pd.notnull(row['comment']):
         record_subject = row['comment']
-    else:
+    elif pd.notnull(row['text']):
         record_subject = row['text']
 
     return str(record_subject)
+
+
+def print_records(title, records):
+    if records.empty:
+        return
+    print('{} ({}):'.format(title, len(records.index)))
+    for _, row in records.iterrows():
+        print('  {:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row['amount'], str(row['value_date']), str(row['contra_name']), get_record_subject(row)))
+    print()
