@@ -1,6 +1,5 @@
 import argparse
 import os.path
-import pandas as pd
 
 from functions_data import read_csv_dates
 

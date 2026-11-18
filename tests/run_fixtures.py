@@ -92,7 +92,7 @@ def sorted_listdir(path='.'):
 # --- scripted prompts ------------------------------------------------------
 
 class FakePrompt:
-    """Stands in for PyInquirer.prompt; answers by question name."""
+    """Stands in for questionary.prompt; answers by question name."""
 
     def __init__(self, log, out_dir):
         self.log = log
