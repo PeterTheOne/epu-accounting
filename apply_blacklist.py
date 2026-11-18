@@ -5,7 +5,16 @@ import pandas as pd
 
 import clean_csv
 import presets
-from functions_data import get_date_cols
+from functions_data import get_date_cols, get_record_subject
+
+
+def print_records(title, records):
+    if records.empty:
+        return
+    print('{} ({}):'.format(title, len(records.index)))
+    for _, row in records.iterrows():
+        print('  {:>8}  {:10.10}  {:18.18}  {:28.28}'.format(row['amount'], str(row['value_date']), str(row['contra_name']), get_record_subject(row)))
+    print()
 
 
 def apply_blacklist(input_file, blacklist_file, output_file, preset_key=None, drop_empty=False, whitelist_text=None, blacklist_column='contra_iban', csv_date_format='%d.%m.%Y', csv_delimiter=',', csv_quotechar='"', csv_encoding='utf-8'):
@@ -38,11 +47,19 @@ def apply_blacklist(input_file, blacklist_file, output_file, preset_key=None, dr
     else:
         whitelisted = pd.Series(False, index=data.index)
 
-    drop = data[blacklist_column].isin(blacklist[blacklist_column])
+    blacklisted = data[blacklist_column].isin(blacklist[blacklist_column])
 
     if drop_empty:
         empty = data['contra_iban'].isnull() | (data['contra_iban'].astype(str).str.strip() == '')
-        drop = drop | empty
+    else:
+        empty = pd.Series(False, index=data.index)
+
+    drop = blacklisted | empty
+
+    # log removed records grouped by reason (blacklist takes precedence over empty contra_iban)
+    print_records('Removed: {} in blacklist'.format(blacklist_column), data[blacklisted & ~whitelisted])
+    print_records('Removed: empty contra_iban', data[empty & ~blacklisted & ~whitelisted])
+    print_records('Kept: whitelisted', data[drop & whitelisted])
 
     data = data[~drop | whitelisted]
 
